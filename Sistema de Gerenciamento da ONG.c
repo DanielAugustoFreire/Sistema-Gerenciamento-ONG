@@ -57,8 +57,9 @@ typedef struct{
 //struct Projeto
 typedef struct{
     int codigo;//Codigo 0, nao existe projeto
-    char descricao[100], local[50], atividade[50];
-    int cod_empresa;//Codigo das Empresas participante do Projeto.	proj.cod_empresa[i]
+    char descricao[100], atividade[50];
+    endereco local;
+    int cod_empresa[*TM];//Codigo das Empresas participante do Projeto.	proj.cod_empresa[i]
     data d_p;//data do Projeto
 }projeto;
 
@@ -79,17 +80,18 @@ void  cadastrarVoluntario()
 	else{
 		system("cls");
 		printf("\nBem Vindo");
-		printf("\n---Cadastro de Voluntario---");
+		
 		do{
 			printf("\nID: ");
 			do{		
+				printf("\n---Cadastro de Voluntario---");
 				scanf("%d",&vol.id);
 				retorno=buscaV(cadastro,vol.id);
 				
-				if(retorno==0)
+				if(retorno==0||vol.id<=0)
 					printf("\nId de voluntario Existente\nDigite um ID que nao tenha sido utilizado: ");
 				
-			}while(retorno==0);
+			}while(retorno==0||vol.id<=0);
 
 			printf("\nNome: ");
 			fflush(stdin);
@@ -146,7 +148,7 @@ void  cadastrarVoluntario()
 			
 			printf("\nCadastro feito com Sucesso\n\n");
 			
-			printf("\nDeseja Continuar?\nUse S/N\n");
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
 			scanf(" %c",&confirmacao);
 			confirmacao=toupper(confirmacao);
 			
@@ -158,7 +160,7 @@ void  cadastrarVoluntario()
 }
 
 //Funcao para buscar o ID e nao ser registrado o mesmo ID de Voluntario.
-int buscaV(FILE *busca,int idVol)
+int buscaV(FILE* busca,int idVol)
 {
 	voluntario vol;
 
@@ -186,17 +188,18 @@ void cadastrarEmpresa()
 	{
 		system("cls");
 		printf("\nBem Vindo");
-		printf("\n---Cadastro de Empresas---");
+		
 		do{
+			printf("\n---Cadastro de Empresas---");
 			printf("\nCodigo: ");
 			do{
 				scanf("%d",&emp.codigo);
 				retorno = buscaE(cadastro, emp.codigo);
 				
-				if(retorno==0)
-					printf("\nCodigo de Empresa ja cadastrado\nDigite um codigo valido: ");
+				if(retorno==0||emp.codigo<=0)
+					printf("\nCodigo de Empresa ja cadastrado ou Invalido\nDigite um codigo valido: ");
 				
-			}while(retorno==0)
+			}while(retorno==0||emp.codigo<=0);
 		
 			printf("\nNome da Empresa: ");
 			fflush(stdin);
@@ -212,7 +215,7 @@ void cadastrarEmpresa()
 			gets(emp.end.rua);
 			
 			printf("\nNumero: ");
-			scanf("%d",&emp.end.num)
+			scanf("%d",&emp.end.num);
 			
 			printf("\nBairro: ");
 			fflush(stdin);
@@ -223,10 +226,10 @@ void cadastrarEmpresa()
 			gets(emp.end.cidade);
 				
 			fwrite(&emp,sizeof(empresa),1,cadastro);
-		
+			
 			printf("\nCadastro feito com Sucesso\n\n");
 			
-			printf("\nDeseja Continuar?\nUse S/N\n");
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
 			scanf(" %c",&confirmacao);
 			confirmacao=toupper(confirmacao);
 			
@@ -253,9 +256,133 @@ buscaE(FILE* busca, int codigo)
 }
 void cadastrarProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	SYSTEMTIME st;
+	// Obtém a data e a hora locais
+    GetLocalTime(&st);
+	int ano_atual= st.wYear;//armazenar o ano atual em uma variavel
+	int retorno,*TM,i;
+	char continuar;
+	FILE* cadastro;
+	projeto proj;
+	cadastro=fopen("projetos.bin","ab+");
+	if(cadastro==NULL)
+		printf("\nErro na abertura do arquivo");
+	else
+	{
+		system("cls");
+		printf("\nBem Vindo");
+		
+		do{
+			printf("\nCodigo:");
+			do{
+				printf("\n---Cadastro de Projetos---");
+				scanf("%d",&proj.codigo);
+				retorno = buscaP(cadastro, proj.codigo);
+				
+				if(retorno==0||proj.cod<=0)
+					printf("\nCodigo de Projeto ja cadastrado ou Invalido.\nDigite um codigo valido: ");
+				
+			}while(retorno==0||proj.cod<=0);
+			
+			
+			printf("\nQuantas empresas parceiras participam do projeto?");
+			scanf("%d",&*TM);
+			for(i = 0; i<*TM ; i++)
+			{
+				printf("\nCadastro da %d empresa",i+1);
+				do
+				{
+					printf("\nInsira o codigo da empresa para registra-la em no projeto");
+					scanf("%d",&proj.cod_empresa[i]);
+					
+					retorno = confirmaEmp(proj.cod_empresa[i]);
+					if(retorno==-1)
+						printf("\nNao foi possivel verificar se a empresa existe");
+					if(retorno==1)
+						print("\nNao existe nenhuma empresa com o codigo %d\nPor favor digite outro e tente novamente\n***Caso o valor de empresa foi digitado errado, apenas coloque 0 no codigo da empres***.",proj.cod_empresa[i]);
+				}while(retorno==1||retorno==-1)
+			}
+			printf("\nAtividade: ");
+			fflush(stdin);
+			gets(proj.atividade);
+			
+			printf("\nDescricao: ");
+			fflush(stdin);
+			gets(proj.descricao);
+			printf("\nData do Projeto:\nUse (DD/MM/AAAA) ");
+			
+			do{
+				scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
+				
+				if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
+					printf("Data Invalida\nInsira uma data apos o ano de 2023\nUse (DD/MM/AAAA)");
+				
+			}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
+			printf("\nLocal a ser Realizado:");
+			printf("\nRua: ");
+			fflush(stdin);
+			gets(proj.local.rua);
+			
+			printf("\nNumero: ");
+			scanf("%d",&proj.local.num);
+			
+			printf("\nBairro: ");
+			fflush(stdin);
+			gets(proj.local.cidade);
+			
+			printf("\nCidade: ");
+			fflush(stdin);
+			gets(proj.local.cidade);
+			
+						
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
+			scanf(" %c",&confirmacao);
+			confirmacao=toupper(confirmacao);
+			
+			if(confirmacao=='S')
+				system("cls");
+		}while(confirmacao=='S');
+		fclose(cadastro);
+	}
 }
 
+int buscaP(FILE* busca, int codigo)
+{
+	projeto proj;
+
+	rewind(busca);
+	fread(&proj,sizeof(projeto),1,busca);
+	while(!feof(busca))
+	{
+		if(codigo==proj.codigo)
+			return 0;
+		else
+			return 1;
+	}
+}
+int confirmaEmp(int codigo)
+{
+	FILE* busca
+	busca = fopen("empresas.bin","rb");
+	empresa emp;
+	if(busca==NULL)
+		return -1;
+	else
+	{
+		rewind(busca);
+		fread(&emp,sizeof(empresa),1,busca);
+		while(!feof(busca))
+		{
+			if(codigo==proj.codigo)
+				return 0;
+			else if(codigo==0)
+				return 1;
+			else
+				return 1;
+		}
+		fclose(busca);
+	}
+}
 void excluirVoluntario()
 {
 	printf("\nArea em Contrucao\n");
