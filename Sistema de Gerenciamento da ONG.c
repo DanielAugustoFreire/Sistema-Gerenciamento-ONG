@@ -33,6 +33,11 @@ typedef struct{
 	pessoa p_d;//Pessoa nome e data de nascimento
 }doar_;
 
+
+
+
+
+
 //Struct Projeto/Horas para o voluntario
 typedef struct{
 	int cod_projetos;//quais projetos participa, Inserir codigo do projeto
