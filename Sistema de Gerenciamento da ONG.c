@@ -1426,19 +1426,18 @@ int opcao_sel()
 	    printf("3. Lancamento de Horas\n");//case 3
 	    printf("4. Relatorio\n");//case 4
 	    printf("5. Editar\n");//case 5
-	    printf("6. Doacao\n");//case 6
-	    printf("7. Finalizar\n\n");//case 7
+	    printf("6. Finalizar\n\n");//case 6
 	    
     	printf("Digite o numero correspondente a opcao desejada: ");
     	scanf("%d", &retorno);
     	
-    	if(retorno<1||retorno>7)
+    	if(retorno<1||retorno>6)
     	{
     		system("cls");
     		printf("\nSelecione uma opcao Valida\n\n");	
     	}
     	
-	}while(retorno<1||retorno>7);
+	}while(retorno<1||retorno>6);
 	
 	return retorno;
 }
@@ -1454,17 +1453,18 @@ int op_cadastro()//case 1
 	    printf("1. Voluntario \n");
     	printf("2. Empresa\n");
     	printf("3. Projeto\n");
-    	printf("4. Retornar\n\n");
+    	printf("4. Doador\n");
+    	printf("5. Retornar\n\n");
     
     	printf("Digite o numero correspondente a opcao desejada: ");
    		scanf("%d", &retorno);
    		
-    	if(retorno<1||retorno>4)
+    	if(retorno<1||retorno>5)
     	{
     		system("cls");
     		printf("\nInsira uma opcao valida\n");
     	}
-	}while(retorno<1||retorno>4);
+	}while(retorno<1||retorno>5);
 	
 	return retorno;
                 
@@ -1479,17 +1479,18 @@ int op_exclusao()//case 2
 		printf("1. Voluntario \n");
 		printf("2. Empresa\n");
 		printf("3. Projeto\n");
-		printf("4. Retornar\n\n");
+		printf("4. Doador\n");
+		printf("5. Retornar\n\n");
 	
 		printf("Digite o numero correspondente a opcao desejada: ");
 		scanf("%d", &retorno);
 	
-		if(retorno<1||retorno>4)
+		if(retorno<1||retorno>5)
 		{
 			system("cls");
     		printf("\nInsira uma opcao valida\n\n");
     	}
-	}while(retorno<1||retorno>4);
+	}while(retorno<1||retorno>5);
 	
 	return retorno;
 }
@@ -1504,18 +1505,19 @@ int op_relatorio()//case 4
 		printf("1. Voluntario \n");
 		printf("2. Empresa\n");
 		printf("3. Projeto\n");
-		printf("4. Retornar\n\n");
+		printf("4. Doador\n");
+		printf("5. Retornar\n\n");
 		
 		printf("Digite o numero correspondente a opcao desejada: ");
 		scanf("%d", &retorno);
 		
-		if(retorno<1||retorno>4)
+		if(retorno<1||retorno>5)
 		{
 			system("cls");
 			printf("\nInsira uma opcao valida\n\n");
 		}	
 		
-	}while(retorno<1||retorno>4);
+	}while(retorno<1||retorno>5);
 	return retorno;
 	            
 }
@@ -1530,43 +1532,20 @@ int op_editar()//case 5
 	    printf("1. Voluntario \n");
 	    printf("2. Empresa\n");
 	    printf("3. Projeto\n");
-	    printf("4. Retornar\n\n");
+	    printf("4. Doador\n");
+	    printf("5. Retornar\n\n");
 	
 	    printf("Digite o numero correspondente a opcao desejada: ");
 	    scanf("%d", &retorno);
 	    
-	    if(retorno>4||retorno<=0)
+	    if(retorno>5||retorno<=0)
 	    {
 	    	system("cls");
 	    	printf("\nOpcao Invalida.\n\n");
 	    }
-	}while(retorno>4||retorno<=0);
+	}while(retorno>5||retorno<=0);
     
     return retorno;
-}
-int op_doar()//case 6
-{
-	int retorno;
-	system("cls");
-	
-	do
-	{
-		printf("\nOpcoes do Doador:\n");
-		printf("1. Cadastrar Doador e tipo de Doacao\n");
-		printf("2. Editar Doador\n");
-		printf("3. Listar Doadores\n");
-		printf("4. Excluir Doador\n(*AVISO*)\nEssa acao e irreversivel\n");
-		printf("5. Retornar\n\n");
-		
-		printf("Digite o numero correspondente a opcao desejada: ");
-		scanf("%d", &retorno);
-		if(retorno<1||retorno>5)
-		{
-			system("cls");
-			printf("\nOpcao Invalida.\n\n");	
-		}
-	
-	}while(retorno<1||retorno>5);
 }
 
 main()
@@ -1579,7 +1558,7 @@ main()
 	
 
     opcao = opcao_sel();
-    while(opcao != 7)
+    while(opcao != 6)
     {
 	    switch(opcao)
 	    {
@@ -1597,6 +1576,9 @@ main()
                         cadastrarProjeto();//Feito
                         break;
                     case 4:
+                    	cadastrarDoador();
+                    	break;
+                    case 5:
                         printf("Retornando:\n");
                         break;
                 }
@@ -1616,6 +1598,9 @@ main()
                     	excluirProjeto();//Feito
                         break;
                     case 4:
+            			excluirDoador();
+            			break;
+                    case 5:
                         printf("Retornando:\n");
                         break;
                 }
@@ -1638,7 +1623,10 @@ main()
                     case 3:
                     	verProjeto();//Feito
                         break;
-                    case 4:
+                    case 4: 
+            			listarDoador();
+            			break;
+                    case 5:
                     printf("Retornando:\n");
                     break;
                 }
@@ -1657,32 +1645,15 @@ main()
                         editarProjeto();//Feito
                         break;
                     case 4:
+              			editarDoador();
+            			break;
+                    case 5:
                         printf("Retornando:\n");
                         break;
                 }
                 break;
-            case 6://Doacao
-            	opcao=op_doar();
-            	switch(opcao)
-            	{
-            		case 1:
-            			cadastrarDoador();
-            			break;
-            		case 2:
-            			editarDoador();
-            			break;
-            		case 3:
-            			listarDoador();
-            			break;
-            		case 4:
-            			excluirDoador();
-            			break;
-            		case 5:
-            			printf("\nRetornando:\n");
-            			break;
-            	}
-            	break;
 	    }
 	    opcao = opcao_sel();
 	}
+	printf("\nFinalizando O Programa...");
 }
