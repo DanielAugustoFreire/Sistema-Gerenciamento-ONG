@@ -9,7 +9,7 @@ para cada projeto pode-se ter uma ou mais empresas parceiras
 #include<windows.h>
 #include<stdlib.h>
 #include <ctype.h>
-#define TF 10
+#define TF 20
 //Struct Data
 typedef struct{
 	int dia, mes, ano;
@@ -35,8 +35,8 @@ typedef struct{
 
 //Struct Projeto/Horas para o voluntario
 typedef struct{
-	int cod_projetos;//quais projetos participa, Inserir codigo do projeto
-	int horas_cada;//Quantas Horas participa de cada Projeto
+	int cod_projetos[TF];//quais projetos participa, Inserir codigo do projeto
+	int horas_cada[TF];//Quantas Horas participa de cada Projeto
 }Projeto_ind;
 
 //Struct Voluntario
@@ -73,6 +73,7 @@ void  cadastrarVoluntario()
 	voluntario vol;
 	int retorno;
 	char confirmacao;
+	int i;
 	
 	cadastro=fopen("voluntarios.bin","ab+");
 	if(cadastro==NULL)
@@ -147,6 +148,12 @@ void  cadastrarVoluntario()
 			printf("\nCidade: ");
 			fflush(stdin);
 			gets(vol.end.cidade);
+			
+			for(i=0;i<TF;i++)
+			{
+				vol.projeto.cod_projetos[i]=0;
+				vol.projeto.horas_cada[i]=0;
+			}
 			
 			fwrite(&vol,sizeof(voluntario),1,cadastro);//Cadastrar Voluntarios
 			
@@ -287,7 +294,7 @@ void cadastrarProjeto()
 				
 				if(retorno==0||proj.codigo<0)
 					printf("\nCodigo de Projeto ja cadastrado ou Invalido.\nDigite 0 para retornar ao menu principal\n\nDigite um codigo valido: ");
-				if(codigo==0){
+				if(proj.codigo==0){
 					fclose(cadastro);
 					return;
 				}
@@ -404,7 +411,97 @@ int confirmaEmp(int codigo)
 }
 void excluirVoluntario()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* excluir;
+	char nomebusc[50];
+	int pos;
+	int i;
+	char deseja='S';
+	excluir = fopen("voluntarios.bin","rb");
+	voluntario vol;
+	
+	if(excluir==NULL)
+		printf("\nNao conseguimos abrir o arquivo corretamente, tente novamente mais tarde");
+	else
+	{
+		
+			
+		system("cls");
+		printf("\nBem Vindo a Exclusao de Voluntarios\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+		printf("\nInforme o nome do voluntario que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio tecle <ENTER>\n ");
+		do{
+			fflush(stdin);
+			gets(nomebusc);
+			if(strcmp(nomebusc,"\0")==0){
+				fclose(excluir);
+				return;
+			}
+			else{
+				pos=busca_Ex_Ed_V(excluir,nomebusc);
+				if(pos==-1)
+					printf("\nNome nao encontrado\nCaso queira retornar ao inicio tecle <ENTER>\n\nPor favor digite novamente: ");
+				else
+				{
+					fseek(excluir,pos,0);
+					fread(&vol,sizeof(voluntario),1,excluir);
+					printf("\n\n----------------------------------------------");
+					printf("\nID: %d",vol.id);
+					printf("\nNome: %s",vol.p_v.nome);
+					printf("\nCPF: %s",vol.p_v.CPF);
+					printf("\nTelefone: %s",vol.p_v.telefone);
+					printf("\nData de Nascimento: %d/%d/%d",vol.p_v.data_nasc.dia,vol.p_v.data_nasc.mes,vol.p_v.data_nasc.ano);
+					for(i=0;i<TF;i++)
+					{
+						if(vol.projeto.cod_projetos[i]!=0)
+						{
+							printf("\n\n----------------------------------------------");
+							printf("\nCodigo do Projeto [%d]",vol.projeto.cod_projetos[i]);
+							printf("\nQuantidade de Horas do Projeto = %d",vol.projeto.horas_cada[i]);
+							printf("\n\n----------------------------------------------");
+						}
+					}
+					printf("\nEndereco: \nRua: %s,%d Bairro: %s \nCidade: %s",vol.end.rua,vol.end.num,vol.end.bairro,vol.end.cidade);
+					printf("\n----------------------------------------------");
+					printf("\nDeseja Excluir o registr? (S/N):");
+					scanf(" %c",&deseja);
+					deseja=toupper(deseja);
+					if(deseja=='S')
+					{
+						FILE* temp=fopen("help_voluntario.bin","wb");
+						rewind(excluir);
+						fread(&vol,sizeof(voluntario),1,excluir);
+						while(!feof(excluir))
+						{
+							if(strcmp(nomebusc,vol.p_v.nome)!=0)
+							fwrite(&vol,sizeof(voluntario),1,temp);
+							fread(&vol,sizeof(voluntario),1,excluir);
+						}
+						fclose(excluir);
+						fclose(temp);
+						remove("voluntarios.bin")/
+						rename("help_voluntario.bin","voluntarios.bin");
+						printf("\nExcluido...\n");
+						system("pause");
+					}
+				}
+			}
+			if(deseja!='S')
+				printf("\nCaso deseje voltar ao *Menu Principal* tecle <ENTER>\nOu\nInsira o nome do voluntario a excluir: ");
+			
+		}while(pos==-1||deseja!='S');
+	}
+}
+//Busca para editar e Excluir Voluntario
+int busca_Ex_Ed_V(FILE* arquivo, char nome[])
+{
+	voluntario vol;
+	rewind(arquivo);
+	fread(&vol,sizeof(voluntario),1,arquivo);
+	while(!feof(arquivo) && strcmp(nome,vol.p_v.nome)!=0)
+		fread(&vol,sizeof(voluntario),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(voluntario));
+	else
+		return -1;
 }
 
 void excluirEmpresa()
@@ -520,7 +617,7 @@ int op_exclusao()//case 2
 	system("cls");
 	do
 	{
-		printf("\nMenu de Exclusao:\n***ATENCAO***\nQualquer alteracao e irreversivel");
+		printf("\nMenu de Exclusao:\n***ATENCAO***\nQualquer alteracao e irreversivel\n");
 		printf("1. Voluntario \n");
 		printf("2. Empresa\n");
 		printf("3. Projeto\n");
@@ -717,6 +814,5 @@ main()
             	break;
 	    }
 	    opcao = opcao_sel();
-	    
 	}
 }
