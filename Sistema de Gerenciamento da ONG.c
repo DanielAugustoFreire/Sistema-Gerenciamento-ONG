@@ -338,7 +338,7 @@ void cadastrarProjeto()
 				scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
 				
 				if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
-					printf("Data Invalida\nInsira uma data apos o ano de 2023\nUse (DD/MM/AAAA)\n");
+					printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
 				
 			}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
 			printf("\nLocal a ser Realizado:");
@@ -661,7 +661,183 @@ int busca_Ex_Ed_Pro(FILE* arquivo, int cod)
 
 void lancarHoras()
 {
-	printf("\nArea em Contrucao\n");
+	system("cls");
+	FILE* editar;
+	voluntario vol;
+	int pos;
+	char nome[50];
+	char op;
+	int i;
+	int vetor;
+	int cod, retorno;
+	int parar,salvar;
+	editar = fopen("voluntarios.bin","rb+");
+	system("cls");
+	do{
+		printf("\n*** ALTERACAO DE HORAS DO VOLUNTARIO ***");
+		if(editar==NULL)
+			printf("\nArquivo indisponivel no momento");
+		else
+		{
+			printf("\nNome do Voluntario ou <ENTER> para cancelar:");
+			fflush(stdin);
+			gets(nome);
+			while(strcmp(nome,"\0")!=0)
+			{			
+				pos = busca_Ex_Ed_V(editar,nome);
+				if(pos==-1)
+					printf("\nNao encontrado! Tente Novamente:");
+				else
+				{
+					fseek(editar,pos,0);
+					fread(&vol,sizeof(voluntario),1,editar);
+					printf("\nVoluntario Encontrado!");
+					printf("\nID: %d",vol.id);
+					printf("\nNome: %s",vol.p_v.nome);
+					printf("\nCPF: %s",vol.p_v.CPF);
+					printf("\nTelefone: %s",vol.p_v.telefone);
+					for(i=0;i<TF;i++)
+					{
+						if(vol.projeto.cod_projetos[i]!=0)
+						{
+							printf("\n\n----------------------------------------------");
+							printf("\nCodigo do Projeto [%d]",vol.projeto.cod_projetos[i]);
+							printf("\nQuantidade de Horas: %d ",vol.projeto.horas_cada[i]);
+							printf("\n\n----------------------------------------------");
+						}
+					}
+					printf("\nDeseja Adicionar Projetos ou Horas? use (S/N):");
+					fflush(stdin);
+					scanf("%c",&op);
+					op=toupper(op);
+					if(op == 'S')
+					{
+							printf("\nDeseja Lancar um Projeto para este Voluntario? Use(S/N) ");			
+							fflush(stdin);
+							scanf("%c",&op);
+							op=toupper(op);
+							if(op == 'S')
+							{
+								do{
+									printf("\nInsira o Codigo do Projeto para ser adicionado (Use 0 para cancelar): ");
+									scanf("%d",&cod);
+									retorno = buscaProjeto(cod);
+									if(cod==0)//inseriu a opcao errada
+										retorno=0;									
+									if(retorno==-1)//Codigo nao encontrado
+										printf("\nCodigo Invalido, tente Novamente: ");
+									if(cod==1)//Codigo encontrado fazendo alteracao
+									{
+										parar=1;
+										for(i=0;i<TF;i++)
+										{
+											if(vol.projeto.cod_projetos[i]==cod)
+											{
+												parar=0;
+											}
+											if(vol.projeto.cod_projetos[i]==0&&parar==1)
+											{
+												vol.projeto.cod_projetos[i]=cod;
+												parar=0;
+												salvar=i;
+												printf("\nProjeto Cadastrado");
+											}
+										}
+									}
+								}while(retorno==-1);
+								printf("\nInsira a Quantidade de horas para ser adicionado ao projeto (Use 0 para somente registrar o projeto): ");
+								scanf("%d",&cod);
+								if(cod>0)
+								{
+									vol.projeto.horas_cada[salvar]+=cod;
+									printf("\n%d Horas cadastradas com sucesso",cod);
+								}
+								
+							}
+							else
+							{
+								printf("\nDeseja Acrescentar Horas a um projeto Existente?(S/N)");
+								fflush(stdin);
+								scanf("%c",&op);
+								op=toupper(op);
+								if(op == 'S')
+								{
+									do{
+										printf("\nInsira o Codigo do Projeto para ser adicionado Horas (Use 0 para cancelar): ");
+										scanf("%d",&cod);
+										retorno = buscaProjeto(cod);
+										if(cod==0)//inseriu a opcao errada
+											retorno=0;									
+										if(retorno==-1)//Codigo nao encontrado
+											printf("\nCodigo Invalido, tente Novamente: ");
+										if(cod==1)//Codigo encontrado fazendo alteracao
+										{
+											for(i=0;i<TF;i++)
+											{
+												if(vol.projeto.cod_projetos[i]==cod)
+												{
+													do{
+														printf("\nInsira a quantidade de Horas a ser acrescentada (Digite 0 para Cancelar)");
+														scanf("%d",&cod);
+														if(cod>0)
+														{
+															vol.projeto.horas_cada[i]+=cod;
+															printf("\n%d Horas cadastradas com sucesso",cod);
+														}
+														else if(cod==0){
+															printf("\nCancelando Operacao");
+														}
+														else
+														{
+															cod=-1;
+														}
+													}while(cod==-1);
+												}
+											}
+										}
+									}while(retorno==-1);
+								}
+								else
+								{
+									printf("\nRetornando...");
+								}
+							}
+							fseek(editar,pos,0);
+							fwrite(&vol,sizeof(voluntario),1,editar);
+					
+					}
+				}
+				printf("\nDeseja Cadastrar mais horas ao Voluntario?Digite:\nNome do Voluntario ou <ENTER> para cancelar:");
+				fflush(stdin);
+				gets(nome);
+			}
+		}
+
+	}while(pos==-1||strcmp(nome,"\0")!=0);
+	fclose(editar);
+	system("pause");
+}
+
+int buscaProjeto(int cod)
+{
+	FILE* busca;
+	busca = fopen("projetos.bin","rb");
+	projeto proj;
+
+	rewind(busca);
+
+	if(busca==NULL)
+		return 1;
+	else
+	{
+		while(fread(&proj,sizeof(projeto),1,busca)==1)
+		{
+			if(cod==proj.codigo)
+				return 1;
+		}
+			return -1;
+	}
+	fclose(busca);
 }
 
 void verVoluntario()
@@ -765,31 +941,203 @@ void verEmpresa_cod(int receber)
 	}
 }
 
-void verHoras()
-{
-	printf("\nArea em Contrucao\n");
-}
-
 void editarVoluntario()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* editar;
+	voluntario vol;
+	int pos;
+	char nome[50];
+	char op;
+	editar = fopen("voluntarios.bin","rb+");
+	system("cls");
+	do{
+		
+		printf("\n*** ALTERACAO DE VOLUNTARIO ***");
+		if(editar==NULL)
+			printf("\nArquivo indisponivel no momento");
+		else
+		{
+			printf("\nNome do Voluntario ou <ENTER> para cancelar:");
+			fflush(stdin);
+			gets(nome);
+			while(strcmp(nome,"\0")!=0)
+			{			
+				pos = busca_Ex_Ed_V(editar,nome);
+				if(pos==-1)
+					printf("\nNao encontrado! Tente Novamente:");
+				else
+				{
+					fseek(editar,pos,0);
+					fread(&vol,sizeof(voluntario),1,editar);
+					printf("\nVoluntario Encontrado!");
+					printf("\nID: %d",vol.id);
+					printf("\nNome: %s",vol.p_v.nome);
+					printf("\nCPF: %s",vol.p_v.CPF);
+					printf("\nTelefone: %s",vol.p_v.telefone);
+					printf("\nDeseja Alterar o Telefone? use (S/N):");
+					fflush(stdin);
+					scanf("%c",&op);
+					op=toupper(op);
+					if(op == 'S')
+					{
+						printf("\nNovo Telefone: ");
+						fflush(stdin);
+						gets(vol.p_v.telefone);
+						fseek(editar,pos,0);
+						fwrite(&vol,sizeof(voluntario),1,editar);
+						printf("\nTelefone Alterado");
+					}
+				}
+			}
+		}
+	}while(pos==-1||strcmp(nome,"\0")!=0);
+	fclose(editar);
+	system("pause");
 }
 
 void editarEmpresa()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* editar;
+	empresa emp;
+	int pos;
+	char nome[50];
+	char op;
+	editar = fopen("empresas.bin","rb+");
+	system("cls");
+	do{
+		
+		printf("\n*** ALTERACAO DE EMPRESA ***");
+		if(editar==NULL)
+			printf("\nArquivo indisponivel no momento");
+		else
+		{
+			printf("\nNome da Empresa ou <ENTER> para cancelar:");
+			fflush(stdin);
+			gets(nome);
+			while(strcmp(nome,"\0")!=0)
+			{			
+				pos = busca_Ex_Ed_Emp(editar,nome);
+				if(pos==-1)
+					printf("\nNao encontrado! Tente Novamente:");
+				else
+				{
+					fseek(editar,pos,0);
+					fread(&emp,sizeof(empresa),1,editar);
+					printf("\nEmpresa Encontrada!");
+					printf("\nCodigo: %d",emp.codigo);
+					printf("\nNome: %s",emp.nome);
+					printf("\nCNPJ: %s",emp.CNPJ);
+					printf("\nEndereco:\nRua %s,%d Bairro: %s \nCidade: %s",emp.end.rua,emp.end.num,emp.end.bairro,emp.end.cidade);
+					printf("\nDeseja Alterar o Endereco? use (S/N):");	
+					fflush(stdin);
+					scanf("%c",&op);
+					op=toupper(op);
+					if(op == 'S')
+					{
+						printf("\nNovo Endereco: ");	
+						printf("\nRua:");
+						fflush(stdin);
+						gets(emp.end.rua);
+						
+						printf("\nNumero:");
+						scanf("%d",&emp.end.rua);
+						
+						printf("\nBairro");
+						fflush(stdin);
+						gets(emp.end.bairro);
+						
+						printf("\nCidade:");
+						fflush(stdin);
+						gets(emp.end.cidade);
+						fseek(editar,pos,0);
+						fwrite(&emp,sizeof(empresa),1,editar);
+						printf("\nEndereco Alterado");
+					}
+				}
+			}
+		}
+	}while(pos==-1||strcmp(nome,"\0")!=0);
+	fclose(editar);
+	system("pause");
 }
 
 void editarProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* editar;
+	projeto proj;
+	SYSTEMTIME st;
+    GetLocalTime(&st);
+	int ano_atual= st.wYear;
+	int pos;
+	int i;
+	int busca;
+	char op;
+	editar = fopen("projetos.bin","rb+");
+	system("cls");
+	do{
+		
+		printf("\n*** ALTERACAO DE PROJETOS ***");
+		if(editar==NULL)
+			printf("\nArquivo indisponivel no momento");
+		else
+		{
+			printf("\nCodigo do Projeto ou 0 para cancelar:");
+			scanf("%d",&busca);
+			while(busca>0)
+			{			
+				pos = busca_Ex_Ed_Pro(editar,busca);
+				if(pos==-1)
+					printf("\nNao encontrado! Tente Novamente:");
+				else
+				{
+					fseek(editar,pos,0);
+					fread(&proj,sizeof(projeto),1,editar);
+					printf("\nCodigo: %d",proj.codigo);
+					for(i = 0;i<TF; i++){
+						if(proj.cod_empresa[i]!=0)
+						{
+							printf("\nCodigo de empresas participantes do Projeto %d",proj.cod_empresa[i]);
+							verEmpresa_cod(busca);
+						}
+					}
+					printf("\nData do Projeto: %d/%d/%d",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano);
+					printf("\nAtividade:\n%s",proj.atividade);
+					printf("\nDescricao: %s",proj.descricao);
+					printf("\nLocal:\n Rua: %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+					printf("\nDeseja alterar a Data do Projeto?\nUse (S/N)\n");
+					fflush(stdin);
+					scanf("%c",&op);
+					op=toupper(op);
+					if(op == 'S')
+					{
+						printf("\nNova Data do Projeto:\nUse (DD/MM/AAAA) ");
+						
+						do{
+							scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
+							
+							if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
+								printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
+							
+						}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
+						fseek(editar,pos,0);
+						fwrite(&proj,sizeof(projeto),1,editar);
+						printf("\nData Atualizada");
+					}
+					printf("\nCodigo do Projeto ou 0 para cancelar:");
+					scanf("%d",&busca);
+				}
+			}
+		}
+	}while(pos==-1||busca>0);
+	fclose(editar);
+	system("pause");
 }
 
 int opcao_sel()
 {
 	int retorno;
 
-	system("cls");  
+	system("cls");
 	printf("Bem-vindo!\n\n");
 	do
 	{
@@ -877,25 +1225,25 @@ int op_relatorio()//case 4
 		printf("1. Voluntario \n");
 		printf("2. Empresa\n");
 		printf("3. Projeto\n");
-		printf("4. Horas\n");
-		printf("5. Retornar\n\n");
+		printf("4. Retornar\n\n");
 		
 		printf("Digite o numero correspondente a opcao desejada: ");
 		scanf("%d", &retorno);
 		
-		if(retorno<1||retorno>5)
+		if(retorno<1||retorno>4)
 		{
 			system("cls");
 			printf("\nInsira uma opcao valida\n\n");
 		}	
 		
-	}while(retorno<1||retorno>5);
+	}while(retorno<1||retorno>4);
 	return retorno;
 	            
 }
 int op_editar()//case 5
 {
 	int retorno;
+	system("cls");
 	
 	do
 	{
@@ -920,7 +1268,7 @@ int op_editar()//case 5
 int op_doar()//case 6
 {
 	int retorno;
-	
+	system("cls");
 	
 	do
 	{
@@ -941,6 +1289,7 @@ int op_doar()//case 6
 	
 	}while(retorno<1||retorno>5);
 }
+
 main()
 {
 	voluntario vol;
@@ -960,13 +1309,13 @@ main()
                 switch(opcao)
                 {
                 	case 1:
-                        cadastrarVoluntario();
+                        cadastrarVoluntario();//Feito
                         break;
                     case 2:
-                        cadastrarEmpresa();
+                        cadastrarEmpresa();//Feito
                         break;
                     case 3:
-                        cadastrarProjeto();
+                        cadastrarProjeto();//Feito
                         break;
                     case 4:
                         printf("Retornando:\n");
@@ -979,13 +1328,13 @@ main()
 	            switch(opcao)
                 {
                 	case 1:
-                        excluirVoluntario();
+                        excluirVoluntario();//Feito
                         break;
                     case 2:
-                        excluirEmpresa();
+                        excluirEmpresa();//Feito
                         break;
                     case 3:
-                    	excluirProjeto();
+                    	excluirProjeto();//Feito
                         break;
                     case 4:
                         printf("Retornando:\n");
@@ -1002,18 +1351,15 @@ main()
 	            switch(opcao)
                 {
                 	case 1:
-                        verVoluntario();
+                        verVoluntario();//Feito
                         break;
                     case 2:
-                        verEmpresa();
+                        verEmpresa();//Feito
                         break;
                     case 3:
-                    	verProjeto();
+                    	verProjeto();//Feito
                         break;
                     case 4:
-                        verHoras();
-                        break;
-                    case 5:
                     printf("Retornando:\n");
                     break;
                 }
@@ -1023,13 +1369,13 @@ main()
                 switch(opcao)
                 {
                 	case 1:
-                        editarVoluntario();
+                        editarVoluntario();//Feito
                         break;
                     case 2:
-                        editarEmpresa();
+                        editarEmpresa();//Feito
                         break;
                     case 3:
-                        editarProjeto();
+                        editarProjeto();//Feito
                         break;
                     case 4:
                         printf("Retornando:\n");
