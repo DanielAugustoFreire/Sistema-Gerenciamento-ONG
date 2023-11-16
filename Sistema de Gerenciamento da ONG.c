@@ -28,9 +28,11 @@ typedef struct{
 
 //Struct Doação
 typedef struct{
-	char tipo[40], descricao[40],o_que[50],pres_din;
+	char descricao[40],o_que[50];
 	int cod;
+	float pres_din;
 	pessoa p_d;//Pessoa nome e data de nascimento
+	data dt_doa;
 }doar_;
 
 //Struct Projeto/Horas para o voluntario
@@ -1133,6 +1135,283 @@ void editarProjeto()
 	system("pause");
 }
 
+void cadastrarDoador()
+{
+	SYSTEMTIME st;
+    GetLocalTime(&st);
+	int ano_atual= st.wYear;
+	FILE* cadastro;
+	doar_ doa;
+	int retorno;
+	char confirmacao;
+	int i;
+	int menos_18=0;
+	int tipo;
+	
+	cadastro=fopen("doadores.bin","ab+");
+	if(cadastro==NULL)
+		printf("\nErro na abertura do arquivo, tento novamente mais tarde");
+	else{
+		system("cls");
+		printf("\nBem Vindo");
+		printf("\nVoce tem certeza que deseja iniciar o cadastro de doadores?");
+		fflush(stdin);
+		scanf("%c",&confirmacao);
+		confirmacao=toupper(confirmacao);
+		if(confirmacao='S')
+		{
+			do{
+				printf("\n---Cadastro de Doadores---");
+				doa.cod=proximo_codigoDoador(cadastro);
+				do{
+					menos_18=0;
+					
+					printf("\nNome: ");
+					fflush(stdin);
+					gets(doa.p_d.nome);
+					
+					printf("\nCPF: ");
+					fflush(stdin);
+					gets(doa.p_d.CPF);
+					
+					printf("\nTelefone: ");
+					fflush(stdin);
+					gets(doa.p_d.telefone);
+					
+					do
+					{
+						printf("\nData de Doacao (dd/mm/aa):");
+						scanf("%d %d %d",&doa.p_d.data_nasc.dia,&doa.p_d.data_nasc.mes,&doa.p_d.data_nasc.ano);
+								
+						if(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano<ano_atual)
+							printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
+						
+					}while(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano<ano_atual);
+				}while(menos_18==1);
+				do{
+					printf("\nSelecione o Tipo de Doacao:");
+					printf("\n1 - Produto");
+					printf("\n2 - Dinheiro");
+					printf("\nOpcao: ");
+					scanf("%d",&tipo);
+				}while(tipo<1||tipo>2);
+				if(tipo==1)
+				{
+					strcpy(doa.o_que,"Tipo de Doacao: Produto");
+					printf("\nEspecifique que tipo de produto e\nCrie uma descricao a ele\nDescricao: ");
+					fflush(stdin);
+					gets(doa.descricao);
+					doa.pres_din=0;
+				}
+				else
+				{
+					strcpy(doa.o_que,"Tipo de Doacao: Dinheiro");
+					printf("\nInsira a quantidade Doada: ");
+					scanf("%f",&doa.pres_din);
+					strcpy(doa.descricao,"Doacao em Dinheiro para Ajudar a ONG em seus afazeres");
+				}
+				
+				fwrite(&doa,sizeof(doar_),1,cadastro);//Cadastrar Doadores
+				
+				printf("\nCadastro feito com Sucesso\n\n");
+				
+				printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
+				scanf(" %c",&confirmacao);
+				confirmacao=toupper(confirmacao);
+				
+				if(confirmacao=='S')
+					system("cls");
+			}while(confirmacao=='S');	
+		}
+	fclose(cadastro);
+	system("pause");
+	}
+}
+
+int proximo_codigoDoador(FILE* busca)
+{
+	doar_ doa;
+	int codigo=0;
+    rewind(busca);
+
+    while (fread(&doa, sizeof(doar_), 1, busca) == 1) {
+    	codigo =doa.cod+1;
+    }
+
+    return codigo;
+}
+void editarDoador()
+{
+	FILE* editar;
+	doar_ doa;
+	int pos;
+	char nome[50];
+	char op;
+	editar = fopen("doadores.bin","rb+");
+	system("cls");
+	do{
+		
+		printf("\n*** ALTERACAO DE DOADOR ***");
+		if(editar==NULL)
+			printf("\nArquivo indisponivel no momento");
+		else
+		{
+			printf("\nNome do Doador ou <ENTER> para cancelar:");
+			fflush(stdin);
+			gets(nome);
+			while(strcmp(nome,"\0")!=0)
+			{			
+				pos = busca_Ex_Ed_Doar(editar,nome);
+				if(pos==-1)
+					printf("\nNao encontrado! Tente Novamente:");
+				else
+				{
+					fseek(editar,pos,0);
+					fread(&doa,sizeof(doar_),1,editar);
+					printf("\nCodigo de Registro: %d",doa.cod);
+					printf("\nNome: %s",doa.p_d.nome);
+					printf("\nCPF: %s",doa.p_d.CPF);
+					printf("\nTelefone: %s",doa.p_d.telefone);
+					printf("\nData de Doacao %d/%d/%d",doa.p_d.data_nasc.dia,doa.p_d.data_nasc.mes,doa.p_d.data_nasc.ano);
+					printf("\n%s",doa.o_que);
+					printf("\nDescricao: %s",doa.descricao);
+					printf("\nDeseja Alterar a Descricao da Doacao? use (S/N):");
+					fflush(stdin);
+					scanf("%c",&op);
+					op=toupper(op);
+					if(op == 'S')
+					{
+						printf("\nNova Descricao: ");
+						fflush(stdin);
+						gets(doa.descricao);
+						fseek(editar,pos,0);
+						fwrite(&doa,sizeof(doar_),1,editar);
+						printf("\nDescricao Alterada");
+					}
+				}
+				printf("\nNome do Doador ou <ENTER> para cancelar:");
+				fflush(stdin);
+				gets(nome);
+			}
+		}
+	}while(pos==-1||strcmp(nome,"\0")!=0);
+	fclose(editar);
+	system("pause");
+}
+void listarDoador()
+{
+	FILE* ver;
+	doar_ doa;
+	ver=fopen("doadores.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&doa,sizeof(doar_),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo de Registro: %d",doa.cod);
+			printf("\nNome: %s",doa.p_d.nome);
+			printf("\nCPF: %s",doa.p_d.CPF);
+			printf("\nTelefone: %s",doa.p_d.telefone);
+			printf("\nData de Doacao %d/%d/%d",doa.p_d.data_nasc.dia,doa.p_d.data_nasc.mes,doa.p_d.data_nasc.ano);
+			printf("\n%s",doa.o_que);
+			printf("\nDescricao: %s",doa.descricao);
+			if(doa.pres_din>0)
+				printf("\nQuantia: %.2f",doa.pres_din);
+			printf("\n=====================================================\n");
+		}
+		fclose(ver);
+	}
+	system("pause");
+}
+
+void excluirDoador()
+{
+	FILE* excluir;
+	char nomebusc[50];
+	int pos;
+	char deseja='S';
+	excluir = fopen("doadores.bin","rb");
+	doar_ doa;
+	
+	if(excluir==NULL)
+		printf("\nNao conseguimos abrir o arquivo corretamente, tente novamente mais tarde");
+	else
+	{
+		
+			
+		system("cls");
+		printf("\nBem Vindo a Exclusao de Doadores\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+		printf("\nInforme o nome do Doador que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio tecle <ENTER>\n ");
+		do{
+			fflush(stdin);
+			gets(nomebusc);
+			if(strcmp(nomebusc,"\0")==0){
+				fclose(excluir);
+				return;
+			}
+			else{
+				pos=busca_Ex_Ed_Doar(excluir,nomebusc);
+				if(pos==-1)
+					printf("\nNome nao encontrado\nCaso queira retornar ao inicio tecle <ENTER>\n\nPor favor digite novamente: ");
+				else
+				{
+					fseek(excluir,pos,0);
+					fread(&doa,sizeof(doar_),1,excluir);
+					printf("\n\n----------------------------------------------");
+					printf("\nCodigo: %d",doa.cod);
+					printf("\nNome: %s",doa.p_d.nome);
+					printf("\nCPF: %s",doa.p_d.CPF);
+					printf("\nTelefone: %s",doa.p_d.telefone);
+					printf("\nData de Doacao: %d/%d/%d",doa.p_d.data_nasc.dia,doa.p_d.data_nasc.mes,doa.p_d.data_nasc.ano);
+					printf("\n%s",doa.o_que);
+					printf("\nDescricao: %s",doa.descricao);
+					if(doa.pres_din>0)
+						printf("\nQuantia: %.2f",doa.pres_din);
+					printf("\n----------------------------------------------");
+					printf("\nDeseja Excluir o registro? (S/N):");
+					scanf(" %c",&deseja);
+					deseja=toupper(deseja);
+					if(deseja=='S')
+					{
+						FILE* temp=fopen("help_doador.bin","wb");
+						rewind(excluir);
+						fread(&doa,sizeof(doar_),1,excluir);
+						while(!feof(excluir))
+						{
+							if(strcmp(nomebusc,doa.p_d.nome)!=0)
+							fwrite(&doa,sizeof(doar_),1,temp);
+							fread(&doa,sizeof(doar_),1,excluir);
+						}
+						fclose(excluir);
+						fclose(temp);
+						remove("doadores.bin")/
+						rename("help_doador.bin","doadores.bin");
+						printf("\nExcluido...\n");
+						system("pause");
+					}
+				}
+			}
+			if(deseja!='S')
+				printf("\nCaso deseje voltar ao *Menu Principal* tecle <ENTER>\nOu\nInsira o nome do voluntario a excluir: ");
+			
+		}while(pos==-1||deseja!='S');
+	}
+}
+
+int busca_Ex_Ed_Doar(FILE* arquivo, char nome[])
+{
+	doar_ doa;
+	rewind(arquivo);
+	fread(&doa,sizeof(doar_),1,arquivo);
+	while(!feof(arquivo) && strcmp(doa.p_d.nome,nome)!=0)
+		fread(&doa,sizeof(doar_),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(doar_));
+	else
+		return -1;
+}
+
 int opcao_sel()
 {
 	int retorno;
@@ -1386,7 +1665,21 @@ main()
             	opcao=op_doar();
             	switch(opcao)
             	{
-            		
+            		case 1:
+            			cadastrarDoador();
+            			break;
+            		case 2:
+            			editarDoador();
+            			break;
+            		case 3:
+            			listarDoador();
+            			break;
+            		case 4:
+            			excluirDoador();
+            			break;
+            		case 5:
+            			printf("\nRetornando:\n");
+            			break;
             	}
             	break;
 	    }
