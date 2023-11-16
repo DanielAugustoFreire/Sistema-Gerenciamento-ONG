@@ -789,7 +789,7 @@ int opcao_sel()
 {
 	int retorno;
 
-	system("cls"); 
+	system("cls");  
 	printf("Bem-vindo!\n\n");
 	do
 	{
