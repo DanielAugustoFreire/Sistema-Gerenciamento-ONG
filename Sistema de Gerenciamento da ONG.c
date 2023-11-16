@@ -37,14 +37,14 @@ typedef struct{
 typedef struct{
 	int cod_projetos[TF];//quais projetos participa, Inserir codigo do projeto
 	int horas_cada[TF];//Quantas Horas participa de cada Projeto
-}Projeto_ind;
+}Projeto_ind;//Projeto Cod = 0 nao existe
 
 //Struct Voluntario
 typedef struct{
 	int id;//ID unico por voluntario
 	pessoa p_v;//Pessoa e data de nascimento
 	endereco end;
-	Projeto_ind projeto;//***Lembrar, fazer um Vetor para o voluntario participar mais de um projeto.
+	Projeto_ind projeto;//***Lembrar, fazer um Vetor para o voluntario participar mais de um projeto.****OBS**** Projeto 0 nao existe, salvar todos como 0
 }voluntario;
 
 //Struct Empresa
@@ -461,7 +461,7 @@ void excluirVoluntario()
 					}
 					printf("\nEndereco: \nRua: %s,%d Bairro: %s \nCidade: %s",vol.end.rua,vol.end.num,vol.end.bairro,vol.end.cidade);
 					printf("\n----------------------------------------------");
-					printf("\nDeseja Excluir o registr? (S/N):");
+					printf("\nDeseja Excluir o registro? (S/N):");
 					scanf(" %c",&deseja);
 					deseja=toupper(deseja);
 					if(deseja=='S')
@@ -506,12 +506,157 @@ int busca_Ex_Ed_V(FILE* arquivo, char nome[])
 
 void excluirEmpresa()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* excluir;
+	empresa emp;
+	int pos;
+	char nome[20];
+	char deseja='S';
+	excluir = fopen("empresas.bin","rb");
+	system("cls");
+	printf("\nBem Vindo a Exclusao de Empresas\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+	printf("\nInforme o nome da Empresa que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio tecle <ENTER>\n ");
+	do{
+		fflush(stdin);
+		gets(nome);
+		if(strcmp(nome,"\0")==0){
+			fclose(excluir);
+			return;
+		}
+		else{
+			pos=busca_Ex_Ed_Emp(excluir,nome);
+			if(pos==-1)
+				printf("\nEmpresa nao encontrada\nCaso queira retornar ao tecla <ENTER>\n\nPor favor digite novamente: ");
+			else
+			{
+				fseek(excluir,pos,0);
+				fread(&emp,sizeof(empresa),1,excluir);
+				printf("\n\n----------------------------------------------");
+				printf("\nCodigo: %d",emp.codigo);
+				printf("\nNome: %s",emp.nome);
+				printf("\nCNPJ: %s",emp.CNPJ);
+				printf("\nEndereco:\nRua %s,%d Bairro: %s \nCidade: %s",emp.end.rua,emp.end.num,emp.end.bairro,emp.end.cidade);
+				printf("\nDeseja Excluir o registro? (S/N");
+				scanf(" %c",&deseja);
+				deseja=toupper(deseja);
+				if(deseja=='S')
+				{
+					FILE* temp=fopen("help_empresa.bin","wb");
+					rewind(excluir);
+					fread(&emp,sizeof(empresa),1,excluir);
+					while(!feof(excluir))
+					{
+						if(strcmp(nome,emp.nome)!=0)
+						fwrite(&emp,sizeof(empresa),1,temp);
+						fread(&emp,sizeof(empresa),1,excluir);
+					}
+					fclose(excluir);
+					fclose(temp);
+					remove("empresas.bin");
+					rename("help_empresa.bin","empresas.bin");
+					printf("\nExcluido...\n");
+					system("pause");
+				}
+			}
+		}
+		if(deseja!='S')
+			printf("\nCaso deseje voltar ao *Menu Principal* tecle <ENTER>\nOu\nInsira o nome da empresa para excluir: ");
+	}while(pos==-1||deseja!='S');
 }
 
+int busca_Ex_Ed_Emp(FILE* arquivo, char nome[])
+{
+	empresa emp;
+	rewind(arquivo);
+	fread(&emp,sizeof(empresa),1,arquivo);
+	while(!feof(arquivo) && strcmp(nome,emp.nome)!=0)
+		fread(&emp,sizeof(empresa),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(empresa));
+	else
+		return -1;
+}
 void excluirProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* excluir;
+	int codigo;
+	int pos;
+	int i;
+	char deseja='S';
+	excluir = fopen("projetos.bin","rb");
+	projeto proj;
+	
+	if(excluir==NULL)
+		printf("\nNao conseguimos abrir o arquivo corretamente, tente novamente mais tarde");
+	else{
+		system("cls");
+		printf("\nBem Vindo a Exclusao de Projetos\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+		printf("\nInforme o codigo do projeto que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio digite o codigo 0\n ");
+		do{
+			scanf("%d",&codigo);
+			if(codigo==0){
+				fclose(excluir);
+				return;
+			}
+			else{
+				pos = busca_Ex_Ed_Pro(excluir, codigo);
+				if(pos==-1)
+					printf("\nCodigo nao encontrado\nCaso queira retornar ao *Menu Principal* digite o codigo 0\nDigite o Codigo: ");
+				else{
+					fseek(excluir,pos,0);
+					fread(&proj,sizeof(projeto),1,excluir);
+					printf("\n\n----------------------------------------------");
+					printf("\nCodigo: %d",proj.codigo);
+					for(i = 0;i<TF; i++){
+						if(proj.cod_empresa!=0)
+						{
+							printf("\nCodigo de empresas participantes do Projeto %d",proj.cod_empresa[i]);
+						}
+					}
+					printf("\nData do Projeto: %d/%d/%d",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano);
+					printf("\nAtividade:\n%s",proj.atividade);
+					printf("\nDescricao: %s",proj.descricao);
+					printf("\nLocal:\n Rua: %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+					printf("\n----------------------------------------------");
+					printf("\nDeseja Excluir o registro? (S/N):");
+					scanf(" %c",&deseja);
+					deseja=toupper(deseja);
+					if(deseja=='S')
+					{
+						FILE* temp = fopen("help_projeto.bin","wb");
+						rewind(excluir);
+						fread(&proj,sizeof(projeto),1,excluir);
+						while(!feof(excluir))
+						{
+							if(codigo!=proj.codigo)
+								fwrite(&proj,sizeof(projeto),1,temp);
+							fread(&proj,sizeof(projeto),1,excluir);	
+						}
+						fclose(excluir);
+						fclose(temp);
+						remove("projetos.bin");
+						rename("help_projeto.bin","projetos.bin");
+						printf("\nExcluido...\n");
+						system("pause");
+					}
+				}
+			}
+			if(deseja!='S')
+				printf("\nCaso queira retornar ao *Menu Principal* digite o codigo 0\nDigite o Codigo:");			
+		}while(pos==-1||deseja!='S');
+	}	
+}
+
+int busca_Ex_Ed_Pro(FILE* arquivo, int cod)
+{
+	projeto proj;
+	rewind(arquivo);
+	fread(&proj,sizeof(projeto),1,arquivo);
+	while(!feof(arquivo) && cod!=proj.codigo)
+		fread(&proj,sizeof(projeto),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(projeto));
+	else
+		return -1;
 }
 
 void lancarHoras()
@@ -521,17 +666,103 @@ void lancarHoras()
 
 void verVoluntario()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	int i;
+	voluntario vol;
+	ver=fopen("voluntarios.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&vol,sizeof(voluntario),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nID: %d",vol.id);
+			printf("\nNome: %s",vol.p_v.nome);
+			printf("\nCPF: %s",vol.p_v.CPF);
+			printf("\nTelefone: %s",vol.p_v.telefone);
+			printf("\nData %d/%d/%d",vol.p_v.data_nasc.dia,vol.p_v.data_nasc.mes,vol.p_v.data_nasc.ano);
+			for(i=0;i<TF;i++)
+			{
+				if(vol.projeto.cod_projetos[i]>0)
+				{
+					printf("\nParticipa do Projeto %d com %d horas",vol.projeto.cod_projetos[i],vol.projeto.horas_cada[i]);
+				}
+			}
+			printf("\nEndereco: Rua %s,%d Bairro %s\nCidade %s",vol.end.rua,vol.end.num,vol.end.bairro,vol.end.cidade);
+			printf("\n=====================================================\n");
+		}
+		fclose(ver);
+	}
+	system("pause");
 }
 
 void verEmpresa()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	empresa emp;
+	ver = fopen("empresas.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&emp,sizeof(empresa),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo da Empresa: %d",emp.codigo);
+			printf("\nNome: %s",emp.nome);
+			printf("\nCNPJ: %s",emp.CNPJ);
+			printf("\nEndereco: Rua %s,%d Bairro %s\nCidade %s",emp.end.rua,emp.end.num,emp.end.bairro,emp.end.cidade);
+			printf("\n=====================================================\n");
+		}
+		fclose(ver);
+	}
+	system("pause");
 }
 
 void verProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	projeto proj;
+	char nomeEmpresa[20];
+	int i;
+	ver = fopen("projetos.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&proj,sizeof(projeto),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo do Projeto: %d",proj.codigo);
+			printf("\n%d/%d/%d Atividade:\n%s",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano,proj.atividade);
+			printf("\nDescricao: %s",proj.descricao);
+			printf("\nLocal\n Rua %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+			for(i=0;i<TF;i++)
+			{
+				if(proj.cod_empresa[i]>0){
+					verEmpresa_cod(proj.cod_empresa[i]);
+				}
+			}
+			printf("\n=====================================================\n");
+		}
+	}
+	system("pause");
+}
+
+void verEmpresa_cod(int receber)
+{
+	FILE* arquivo;
+	empresa emp;
+	arquivo=fopen("empresas.bin","rb");
+	if(arquivo==NULL)
+		printf("\nNao foi possivel ver a empresa");
+	else
+	{
+		while(fread(&emp,sizeof(empresa),1,arquivo)==1)
+			if(receber==emp.codigo)
+			{
+				printf("\nEmpresa participante %s",emp.nome);
+			}
+		fclose(arquivo);
+	}
 }
 
 void verHoras()
@@ -558,7 +789,7 @@ int opcao_sel()
 {
 	int retorno;
 
-	system("cls"); 
+	system("cls");  
 	printf("Bem-vindo!\n\n");
 	do
 	{
@@ -639,7 +870,7 @@ int op_relatorio()//case 4
 {
 	int retorno;
 	
-	
+	system("cls");
 	do
 	{
 		printf("\nMenu de Relatorio:\n");
