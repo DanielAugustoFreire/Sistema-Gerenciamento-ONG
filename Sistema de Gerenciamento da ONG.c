@@ -22,7 +22,7 @@ typedef struct{
 }endereco;
 //Struct Pessoa para usar em Geral com data de nascimento
 typedef struct{
-	char nome[50],telefone[20],CPF[15];
+	char nome[50],telefone[20],CPF[16];
 	data data_nasc;
 }pessoa;
 
@@ -50,15 +50,16 @@ typedef struct{
 //Struct Empresa
 typedef struct{
     int codigo;
-    char nome[20],CNPJ;
+    char nome[20],CNPJ[17];
     endereco end;
 }empresa;//***Lembrar, fazer um Vetor para empresa quando for registrar o projeto
 
 //struct Projeto
 typedef struct{
     int codigo;//Codigo 0, nao existe projeto
-    char descricao[100], local[50], atividade[50];
-    int cod_empresa;//Codigo das Empresas participante do Projeto.	proj.cod_empresa[i]
+    char descricao[100], atividade[50];
+    endereco local;
+    int cod_empresa[20];//Codigo das Empresas participante do Projeto, maximo 20 por projetos	proj.cod_empresa[i]
     data d_p;//data do Projeto
 }projeto;
 
@@ -79,17 +80,22 @@ void  cadastrarVoluntario()
 	else{
 		system("cls");
 		printf("\nBem Vindo");
-		printf("\n---Cadastro de Voluntario---");
+		
 		do{
+			printf("\n---Cadastro de Voluntario---");
 			printf("\nID: ");
-			do{		
+			do{				
 				scanf("%d",&vol.id);
 				retorno=buscaV(cadastro,vol.id);
 				
-				if(retorno==0)
-					printf("\nId de voluntario Existente\nDigite um ID que nao tenha sido utilizado: ");
-				
-			}while(retorno==0);
+				if(retorno==0||vol.id<0)
+					printf("\nId de voluntario Existente\nDigite um ID que nao tenha sido utilizado\nDigite 0 caso queira Voltar ao *Menu Principal*\nDigite um ID: ");
+					
+				if(vol.id==0){
+					fclose(cadastro);
+					return;
+				}
+			}while(retorno==0||vol.id<0);
 
 			printf("\nNome: ");
 			fflush(stdin);
@@ -146,7 +152,7 @@ void  cadastrarVoluntario()
 			
 			printf("\nCadastro feito com Sucesso\n\n");
 			
-			printf("\nDeseja Continuar?\nUse S/N\n");
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
 			scanf(" %c",&confirmacao);
 			confirmacao=toupper(confirmacao);
 			
@@ -158,25 +164,25 @@ void  cadastrarVoluntario()
 }
 
 //Funcao para buscar o ID e nao ser registrado o mesmo ID de Voluntario.
-int buscaV(FILE *busca,int idVol)
+int buscaV(FILE* busca,int idVol)
 {
-	voluntario vol;
+    voluntario vol;
 
-	rewind(busca);
-	fread(&vol,sizeof(voluntario),1,busca);
-	while(!feof(busca))
-	{
-		if(idVol==vol.id)
-			return 0;	
-		else
-			return 1;
-	}
+    rewind(busca);
+
+    while (fread(&vol, sizeof(voluntario), 1, busca) == 1) {
+        if (idVol == vol.id) {
+            return 0;  // ID encontrado
+        }
+    }
+
+    return 1;  // ID não encontrado
 }
 
 void cadastrarEmpresa()
 {
 	int retorno;
-	char continuar;
+	char confirmacao;
 	FILE* cadastro;
 	empresa emp;
 	cadastro=fopen("empresas.bin","ab+");
@@ -186,17 +192,21 @@ void cadastrarEmpresa()
 	{
 		system("cls");
 		printf("\nBem Vindo");
-		printf("\n---Cadastro de Empresas---");
+		
 		do{
+			printf("\n---Cadastro de Empresas---");
 			printf("\nCodigo: ");
 			do{
 				scanf("%d",&emp.codigo);
 				retorno = buscaE(cadastro, emp.codigo);
 				
-				if(retorno==0)
-					printf("\nCodigo de Empresa ja cadastrado\nDigite um codigo valido: ");
+				if(retorno==0||emp.codigo<0){
+					printf("\nCodigo de Empresa ja cadastrado ou Invalido\nDigite 0 para retornar ao *Menu Principal*\n\nDigite um codigo valido: ");
+					return;
+				}
 				
-			}while(retorno==0)
+				
+			}while(retorno==0||emp.codigo<0);
 		
 			printf("\nNome da Empresa: ");
 			fflush(stdin);
@@ -212,7 +222,7 @@ void cadastrarEmpresa()
 			gets(emp.end.rua);
 			
 			printf("\nNumero: ");
-			scanf("%d",&emp.end.num)
+			scanf("%d",&emp.end.num);
 			
 			printf("\nBairro: ");
 			fflush(stdin);
@@ -221,12 +231,12 @@ void cadastrarEmpresa()
 			printf("\nCidade: ");
 			fflush(stdin);
 			gets(emp.end.cidade);
-				
+			
 			fwrite(&emp,sizeof(empresa),1,cadastro);
-		
+			
 			printf("\nCadastro feito com Sucesso\n\n");
 			
-			printf("\nDeseja Continuar?\nUse S/N\n");
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
 			scanf(" %c",&confirmacao);
 			confirmacao=toupper(confirmacao);
 			
@@ -242,20 +252,156 @@ buscaE(FILE* busca, int codigo)
 	empresa emp;
 
 	rewind(busca);
-	fread(&emp,sizeof(empresa),1,busca);
-	while(!feof(busca))
+
+	while(fread(&emp,sizeof(empresa),1,busca)==1)
 	{
 		if(codigo==emp.codigo)
-			return 0;	
-		else
-			return 1;
+			return 0;
 	}
+		return 1;
 }
 void cadastrarProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	SYSTEMTIME st;
+	// Obtém a data e a hora locais
+    GetLocalTime(&st);
+	int ano_atual= st.wYear;//armazenar o ano atual em uma variavel
+	int retorno,TM,i;
+	char confirmacao;
+	FILE* cadastro;
+	projeto proj;
+	cadastro=fopen("projetos.bin","ab+");
+	if(cadastro==NULL)
+		printf("\nErro na abertura do arquivo");
+	else
+	{
+		system("cls");
+		printf("\nBem Vindo");
+		
+		do{
+			printf("\n---Cadastro de Projetos---");
+			printf("\nCodigo:");
+			do{
+				scanf("%d",&proj.codigo);
+				retorno = buscaP(cadastro,proj.codigo);
+				
+				if(retorno==0||proj.codigo<0)
+					printf("\nCodigo de Projeto ja cadastrado ou Invalido.\nDigite 0 para retornar ao menu principal\n\nDigite um codigo valido: ");
+				if(codigo==0){
+					fclose(cadastro);
+					return;
+				}
+				
+			}while(retorno==0||proj.codigo<=0);
+			
+			do
+			{
+			
+				printf("\nQuantas empresas parceiras participam do projeto?\n*Max 20*\n");
+				scanf("%d",&TM);
+			}while(TM<0||TM>20);
+			for(i = 0; i<TM ; i++)
+			{
+				printf("\nCadastro da %d empresa",i+1);
+				do
+				{
+					printf("\nInsira o codigo da empresa para registra-la em no projeto\n");
+					scanf("%d",&proj.cod_empresa[i]);
+					
+					retorno = confirmaEmp(proj.cod_empresa[i]);
+					if(retorno==-1)
+						printf("\nNao foi possivel verificar se a empresa existe");
+					if(retorno==1)
+						printf("\nNao existe nenhuma empresa com o codigo %d\nPor favor digite outro e tente novamente\n***Caso o valor de empresa foi digitado errado, apenas coloque 0 no codigo da empresa***.\n",proj.cod_empresa[i]);
+				}while(retorno==1||retorno==-1);
+			}
+			for(i = TM; i<20;i++)
+				proj.cod_empresa[i]=0;
+			
+			printf("\nAtividade: ");
+			fflush(stdin);
+			gets(proj.atividade);
+			
+			printf("\nDescricao: ");
+			fflush(stdin);
+			gets(proj.descricao);
+			printf("\nData do Projeto:\nUse (DD/MM/AAAA) ");
+			
+			do{
+				scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
+				
+				if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
+					printf("Data Invalida\nInsira uma data apos o ano de 2023\nUse (DD/MM/AAAA)\n");
+				
+			}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
+			printf("\nLocal a ser Realizado:");
+			printf("\nRua: ");
+			fflush(stdin);
+			gets(proj.local.rua);
+			
+			printf("\nNumero: ");
+			scanf("%d",&proj.local.num);
+			
+			printf("\nBairro: ");
+			fflush(stdin);
+			gets(proj.local.cidade);
+			
+			printf("\nCidade: ");
+			fflush(stdin);
+			gets(proj.local.cidade);
+			
+			fwrite(&proj,sizeof(projeto),1,cadastro);
+						
+			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
+			scanf(" %c",&confirmacao);
+			confirmacao=toupper(confirmacao);
+			
+			if(confirmacao=='S')
+				system("cls");
+		}while(confirmacao=='S');
+		fclose(cadastro);
+	}
 }
 
+int buscaP(FILE* busca, int cod)
+{
+	projeto proj;
+
+	rewind(busca);
+
+	while(fread(&proj,sizeof(projeto),1,busca)==1)
+	{
+		if(cod==proj.codigo)
+			return 0;
+	}
+		return 1;
+}
+int confirmaEmp(int codigo)
+{
+	FILE* busca;
+	busca = fopen("empresas.bin","rb");
+	empresa emp;
+	if(busca==NULL)
+		return -1;
+	else
+	{
+		rewind(busca);
+		fread(&emp,sizeof(empresa),1,busca);
+		while(fread(&emp,sizeof(empresa),1,busca)==1)
+		{
+			if(codigo==0){
+				fclose(busca);
+				return 1;
+			}
+			else if(codigo==emp.codigo){
+				fclose(busca);
+				return 0;
+			}
+		}
+		fclose(busca);
+		return 1;
+	}
+}
 void excluirVoluntario()
 {
 	printf("\nArea em Contrucao\n");
@@ -319,11 +465,10 @@ int opcao_sel()
 	printf("Bem-vindo!\n\n");
 	do
 	{
-
 		printf("Menu:\n");
 	    printf("1. Cadastro\n");//case 1
 	    printf("2. Exclusao\n");//case 2
-	    printf("3. Lancamento\n");//case 3
+	    printf("3. Lancamento de Horas\n");//case 3
 	    printf("4. Relatorio\n");//case 4
 	    printf("5. Editar\n");//case 5
 	    printf("6. Doacao\n");//case 6
@@ -372,10 +517,10 @@ int op_cadastro()//case 1
 int op_exclusao()//case 2
 {
 	int retorno;
-	system("cls");	
+	system("cls");
 	do
 	{
-		printf("\nMenu de Exclusao:\n");
+		printf("\nMenu de Exclusao:\n***ATENCAO***\nQualquer alteracao e irreversivel");
 		printf("1. Voluntario \n");
 		printf("2. Empresa\n");
 		printf("3. Projeto\n");
@@ -502,7 +647,7 @@ main()
                 break;
                 
             case 2://Exclusao
-	            opcao=op_exclusao;//Menu de exclusao
+	            opcao=op_exclusao();//Menu de exclusao
 	            switch(opcao)
                 {
                 	case 1:
@@ -525,7 +670,7 @@ main()
             	break;
             
             case 4://Relatorio
-				opcao=op_relatorio;//Menu de Relatorio
+				opcao=op_relatorio();//Menu de Relatorio
 	            switch(opcao)
                 {
                 	case 1:
