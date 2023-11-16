@@ -37,14 +37,14 @@ typedef struct{
 typedef struct{
 	int cod_projetos[TF];//quais projetos participa, Inserir codigo do projeto
 	int horas_cada[TF];//Quantas Horas participa de cada Projeto
-}Projeto_ind;
+}Projeto_ind;//Projeto Cod = 0 nao existe
 
 //Struct Voluntario
 typedef struct{
 	int id;//ID unico por voluntario
 	pessoa p_v;//Pessoa e data de nascimento
 	endereco end;
-	Projeto_ind projeto;//***Lembrar, fazer um Vetor para o voluntario participar mais de um projeto.
+	Projeto_ind projeto;//***Lembrar, fazer um Vetor para o voluntario participar mais de um projeto.****OBS**** Projeto 0 nao existe, salvar todos como 0
 }voluntario;
 
 //Struct Empresa
@@ -666,17 +666,103 @@ void lancarHoras()
 
 void verVoluntario()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	int i;
+	voluntario vol;
+	ver=fopen("voluntarios.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&vol,sizeof(voluntario),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nID: %d",vol.id);
+			printf("\nNome: %s",vol.p_v.nome);
+			printf("\nCPF: %s",vol.p_v.CPF);
+			printf("\nTelefone: %s",vol.p_v.telefone);
+			printf("\nData %d/%d/%d",vol.p_v.data_nasc.dia,vol.p_v.data_nasc.mes,vol.p_v.data_nasc.ano);
+			for(i=0;i<TF;i++)
+			{
+				if(vol.projeto.cod_projetos[i]>0)
+				{
+					printf("\nParticipa do Projeto %d com %d horas",vol.projeto.cod_projetos[i],vol.projeto.horas_cada[i]);
+				}
+			}
+			printf("\nEndereco: Rua %s,%d Bairro %s\nCidade %s",vol.end.rua,vol.end.num,vol.end.bairro,vol.end.cidade);
+			printf("\n=====================================================\n");
+		}
+		fclose(ver);
+	}
+	system("pause");
 }
 
 void verEmpresa()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	empresa emp;
+	ver = fopen("empresas.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&emp,sizeof(empresa),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo da Empresa: %d",emp.codigo);
+			printf("\nNome: %s",emp.nome);
+			printf("\nCNPJ: %s",emp.CNPJ);
+			printf("\nEndereco: Rua %s,%d Bairro %s\nCidade %s",emp.end.rua,emp.end.num,emp.end.bairro,emp.end.cidade);
+			printf("\n=====================================================\n");
+		}
+		fclose(ver);
+	}
+	system("pause");
 }
 
 void verProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* ver;
+	projeto proj;
+	char nomeEmpresa[20];
+	int i;
+	ver = fopen("projetos.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&proj,sizeof(projeto),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo do Projeto: %d",proj.codigo);
+			printf("\n%d/%d/%d Atividade:\n%s",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano,proj.atividade);
+			printf("\nDescricao: %s",proj.descricao);
+			printf("\nLocal\n Rua %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+			for(i=0;i<TF;i++)
+			{
+				if(proj.cod_empresa[i]>0){
+					verEmpresa_cod(proj.cod_empresa[i]);
+				}
+			}
+			printf("\n=====================================================\n");
+		}
+	}
+	system("pause");
+}
+
+void verEmpresa_cod(int receber)
+{
+	FILE* arquivo;
+	empresa emp;
+	arquivo=fopen("empresas.bin","rb");
+	if(arquivo==NULL)
+		printf("\nNao foi possivel ver a empresa");
+	else
+	{
+		while(fread(&emp,sizeof(empresa),1,arquivo)==1)
+			if(receber==emp.codigo)
+			{
+				printf("\nEmpresa participante %s",emp.nome);
+			}
+		fclose(arquivo);
+	}
 }
 
 void verHoras()
@@ -784,7 +870,7 @@ int op_relatorio()//case 4
 {
 	int retorno;
 	
-	
+	system("cls");
 	do
 	{
 		printf("\nMenu de Relatorio:\n");
