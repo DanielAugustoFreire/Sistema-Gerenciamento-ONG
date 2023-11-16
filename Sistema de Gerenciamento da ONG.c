@@ -461,7 +461,7 @@ void excluirVoluntario()
 					}
 					printf("\nEndereco: \nRua: %s,%d Bairro: %s \nCidade: %s",vol.end.rua,vol.end.num,vol.end.bairro,vol.end.cidade);
 					printf("\n----------------------------------------------");
-					printf("\nDeseja Excluir o registr? (S/N):");
+					printf("\nDeseja Excluir o registro? (S/N):");
 					scanf(" %c",&deseja);
 					deseja=toupper(deseja);
 					if(deseja=='S')
@@ -506,12 +506,157 @@ int busca_Ex_Ed_V(FILE* arquivo, char nome[])
 
 void excluirEmpresa()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* excluir;
+	empresa emp;
+	int pos;
+	char nome[20];
+	char deseja='S';
+	excluir = fopen("empresas.bin","rb");
+	system("cls");
+	printf("\nBem Vindo a Exclusao de Empresas\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+	printf("\nInforme o nome da Empresa que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio tecle <ENTER>\n ");
+	do{
+		fflush(stdin);
+		gets(nome);
+		if(strcmp(nome,"\0")==0){
+			fclose(excluir);
+			return;
+		}
+		else{
+			pos=busca_Ex_Ed_Emp(excluir,nome);
+			if(pos==-1)
+				printf("\nEmpresa nao encontrada\nCaso queira retornar ao tecla <ENTER>\n\nPor favor digite novamente: ");
+			else
+			{
+				fseek(excluir,pos,0);
+				fread(&emp,sizeof(empresa),1,excluir);
+				printf("\n\n----------------------------------------------");
+				printf("\nCodigo: %d",emp.codigo);
+				printf("\nNome: %s",emp.nome);
+				printf("\nCNPJ: %s",emp.CNPJ);
+				printf("\nEndereco:\nRua %s,%d Bairro: %s \nCidade: %s",emp.end.rua,emp.end.num,emp.end.bairro,emp.end.cidade);
+				printf("\nDeseja Excluir o registro? (S/N");
+				scanf(" %c",&deseja);
+				deseja=toupper(deseja);
+				if(deseja=='S')
+				{
+					FILE* temp=fopen("help_empresa.bin","wb");
+					rewind(excluir);
+					fread(&emp,sizeof(empresa),1,excluir);
+					while(!feof(excluir))
+					{
+						if(strcmp(nome,emp.nome)!=0)
+						fwrite(&emp,sizeof(empresa),1,temp);
+						fread(&emp,sizeof(empresa),1,excluir);
+					}
+					fclose(excluir);
+					fclose(temp);
+					remove("empresas.bin");
+					rename("help_empresa.bin","empresas.bin");
+					printf("\nExcluido...\n");
+					system("pause");
+				}
+			}
+		}
+		if(deseja!='S')
+			printf("\nCaso deseje voltar ao *Menu Principal* tecle <ENTER>\nOu\nInsira o nome da empresa para excluir: ");
+	}while(pos==-1||deseja!='S');
 }
 
+int busca_Ex_Ed_Emp(FILE* arquivo, char nome[])
+{
+	empresa emp;
+	rewind(arquivo);
+	fread(&emp,sizeof(empresa),1,arquivo);
+	while(!feof(arquivo) && strcmp(nome,emp.nome)!=0)
+		fread(&emp,sizeof(empresa),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(empresa));
+	else
+		return -1;
+}
 void excluirProjeto()
 {
-	printf("\nArea em Contrucao\n");
+	FILE* excluir;
+	int codigo;
+	int pos;
+	int i;
+	char deseja='S';
+	excluir = fopen("projetos.bin","rb");
+	projeto proj;
+	
+	if(excluir==NULL)
+		printf("\nNao conseguimos abrir o arquivo corretamente, tente novamente mais tarde");
+	else{
+		system("cls");
+		printf("\nBem Vindo a Exclusao de Projetos\n****Todas acoes sao irreversiveis certifique-se de nao errar***");
+		printf("\nInforme o codigo do projeto que deseja excuir\ndo banco de Dados\nCaso queira retornar ao inicio digite o codigo 0\n ");
+		do{
+			scanf("%d",&codigo);
+			if(codigo==0){
+				fclose(excluir);
+				return;
+			}
+			else{
+				pos = busca_Ex_Ed_Pro(excluir, codigo);
+				if(pos==-1)
+					printf("\nCodigo nao encontrado\nCaso queira retornar ao *Menu Principal* digite o codigo 0\nDigite o Codigo: ");
+				else{
+					fseek(excluir,pos,0);
+					fread(&proj,sizeof(projeto),1,excluir);
+					printf("\n\n----------------------------------------------");
+					printf("\nCodigo: %d",proj.codigo);
+					for(i = 0;i<TF; i++){
+						if(proj.cod_empresa!=0)
+						{
+							printf("\nCodigo de empresas participantes do Projeto %d",proj.cod_empresa[i]);
+						}
+					}
+					printf("\nData do Projeto: %d/%d/%d",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano);
+					printf("\nAtividade:\n%s",proj.atividade);
+					printf("\nDescricao: %s",proj.descricao);
+					printf("\nLocal:\n Rua: %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+					printf("\n----------------------------------------------");
+					printf("\nDeseja Excluir o registro? (S/N):");
+					scanf(" %c",&deseja);
+					deseja=toupper(deseja);
+					if(deseja=='S')
+					{
+						FILE* temp = fopen("help_projeto.bin","wb");
+						rewind(excluir);
+						fread(&proj,sizeof(projeto),1,excluir);
+						while(!feof(excluir))
+						{
+							if(codigo!=proj.codigo)
+								fwrite(&proj,sizeof(projeto),1,temp);
+							fread(&proj,sizeof(projeto),1,excluir);	
+						}
+						fclose(excluir);
+						fclose(temp);
+						remove("projetos.bin");
+						rename("help_projeto.bin","projetos.bin");
+						printf("\nExcluido...\n");
+						system("pause");
+					}
+				}
+			}
+			if(deseja!='S')
+				printf("\nCaso queira retornar ao *Menu Principal* digite o codigo 0\nDigite o Codigo:");			
+		}while(pos==-1||deseja!='S');
+	}	
+}
+
+int busca_Ex_Ed_Pro(FILE* arquivo, int cod)
+{
+	projeto proj;
+	rewind(arquivo);
+	fread(&proj,sizeof(projeto),1,arquivo);
+	while(!feof(arquivo) && cod!=proj.codigo)
+		fread(&proj,sizeof(projeto),1,arquivo);
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(projeto));
+	else
+		return -1;
 }
 
 void lancarHoras()
