@@ -28,7 +28,7 @@ typedef struct{
 
 //Struct Doação
 typedef struct{
-	char descricao[40],o_que[50];
+	char descricao[60],o_que[50];
 	int cod;
 	float pres_din;
 	pessoa p_d;//Pessoa nome e data de nascimento
@@ -86,6 +86,8 @@ void  cadastrarVoluntario()
 		
 		do{
 			printf("\n---Cadastro de Voluntario---");
+
+			
 			printf("\nID: ");
 			do{				
 				scanf("%d",&vol.id);
@@ -99,10 +101,11 @@ void  cadastrarVoluntario()
 					return;
 				}
 			}while(retorno==0||vol.id<0);
-
+			
 			printf("\nNome: ");
 			fflush(stdin);
 			gets(vol.p_v.nome);
+
 			
 			printf("\nCPF: ");
 			fflush(stdin);
@@ -211,9 +214,12 @@ void cadastrarEmpresa()
 				
 				if(retorno==0||emp.codigo<0){
 					printf("\nCodigo de Empresa ja cadastrado ou Invalido\nDigite 0 para retornar ao *Menu Principal*\n\nDigite um codigo valido: ");
+				}
+				if(emp.codigo==0)
+				{
+					fclose(cadastro);
 					return;
 				}
-				
 				
 			}while(retorno==0||emp.codigo<0);
 		
@@ -250,7 +256,10 @@ void cadastrarEmpresa()
 			confirmacao=toupper(confirmacao);
 			
 			if(confirmacao=='S')
+			{
+				system("pause");
 				system("cls");
+			}
 		}while(confirmacao=='S');
 		fclose(cadastro);
 	}
@@ -320,9 +329,9 @@ void cadastrarProjeto()
 					retorno = confirmaEmp(proj.cod_empresa[i]);
 					if(retorno==-1)
 						printf("\nNao foi possivel verificar se a empresa existe");
-					if(retorno==1)
+					if(retorno!=0)
 						printf("\nNao existe nenhuma empresa com o codigo %d\nPor favor digite outro e tente novamente\n***Caso o valor de empresa foi digitado errado, apenas coloque 0 no codigo da empresa***.\n",proj.cod_empresa[i]);
-				}while(retorno==1||retorno==-1);
+				}while(retorno!=0||retorno==-1);
 			}
 			for(i = TM; i<20;i++)
 				proj.cod_empresa[i]=0;
@@ -394,15 +403,15 @@ int confirmaEmp(int codigo)
 		return -1;
 	else
 	{
+		if(codigo==0){
+			fclose(busca);
+			return 1;
+		}
 		rewind(busca);
-		fread(&emp,sizeof(empresa),1,busca);
 		while(fread(&emp,sizeof(empresa),1,busca)==1)
 		{
-			if(codigo==0){
-				fclose(busca);
-				return 1;
-			}
-			else if(codigo==emp.codigo){
+
+			if(codigo==emp.codigo){
 				fclose(busca);
 				return 0;
 			}
@@ -609,7 +618,7 @@ void excluirProjeto()
 					printf("\n\n----------------------------------------------");
 					printf("\nCodigo: %d",proj.codigo);
 					for(i = 0;i<TF; i++){
-						if(proj.cod_empresa!=0)
+						if(proj.cod_empresa[i]!=0)
 						{
 							printf("\nCodigo de empresas participantes do Projeto %d",proj.cod_empresa[i]);
 						}
@@ -620,14 +629,15 @@ void excluirProjeto()
 					printf("\nLocal:\n Rua: %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
 					printf("\n----------------------------------------------");
 					printf("\nDeseja Excluir o registro? (S/N):");
-					scanf(" %c",&deseja);
+					fflush(stdin);
+					scanf("%c",&deseja);
 					deseja=toupper(deseja);
 					if(deseja=='S')
 					{
+						
 						FILE* temp = fopen("help_projeto.bin","wb");
-						rewind(excluir);
-						fread(&proj,sizeof(projeto),1,excluir);
-						while(!feof(excluir))
+						rewind(excluir);				
+						while(fread(&proj,sizeof(projeto),1,excluir))
 						{
 							if(codigo!=proj.codigo)
 								fwrite(&proj,sizeof(projeto),1,temp);
@@ -640,6 +650,7 @@ void excluirProjeto()
 						printf("\nExcluido...\n");
 						system("pause");
 					}
+					//RetirarHoras(codigo);
 				}
 			}
 			if(deseja!='S')
@@ -647,7 +658,62 @@ void excluirProjeto()
 		}while(pos==-1||deseja!='S');
 	}	
 }
+/*Não Consegui Retirar as horas do registro 
+void RetirarHoras(int codigo)
+{
+    FILE *arquivo;
+    voluntario vol;
+    int pos, i;
 
+    arquivo = fopen("voluntarios.bin", "rb+");
+    if (arquivo == NULL)
+    {
+        perror("Erro ao abrir voluntarios.bin para leitura/escrita");
+        return 0; // Ou outro código de erro adequado
+    }
+
+    pos = buscaZera(arquivo, codigo);
+
+    rewind(arquivo);
+    while (fread(&vol, sizeof(voluntario), 1, arquivo) == 1)
+    {
+        for (i = 0; i < TF; i++)
+        {
+            if (codigo == vol.projeto.cod_projetos[i])
+            {
+                vol.projeto.cod_projetos[i] = 0;
+                vol.projeto.horas_cada[i] = 0;
+            }
+        }
+        
+        fseek(arquivo, pos, SEEK_SET);
+        fwrite(&vol, sizeof(voluntario), 1, arquivo);
+        pos = ftell(arquivo);
+    }
+
+    fclose(arquivo);
+    return 1; // Ou outro código de sucesso adequado
+}
+int buscaZera(FILE* arquivo,int cod)
+{
+	int i;
+	voluntario vol;
+	rewind(arquivo);
+	fread(&vol,sizeof(voluntario),1,arquivo);
+	i=0;
+	
+	while(!feof(arquivo) && cod!=vol.projeto.cod_projetos[i]){
+		fread(&vol,sizeof(voluntario),1,arquivo);
+		i++;
+		if(i==TF)
+			i=0;
+	}
+	if(!feof(arquivo))
+		return(ftell(arquivo)-sizeof(projeto));
+	else
+		return -1;
+}
+*/
 int busca_Ex_Ed_Pro(FILE* arquivo, int cod)
 {
 	projeto proj;
@@ -676,6 +742,7 @@ void lancarHoras()
 	editar = fopen("voluntarios.bin","rb+");
 	system("cls");
 	do{
+		pos=0;
 		printf("\n*** ALTERACAO DE HORAS DO VOLUNTARIO ***");
 		if(editar==NULL)
 			printf("\nArquivo indisponivel no momento");
@@ -896,35 +963,6 @@ void verEmpresa()
 	system("pause");
 }
 
-void verProjeto()
-{
-	FILE* ver;
-	projeto proj;
-	char nomeEmpresa[20];
-	int i;
-	ver = fopen("projetos.bin","rb");
-	if(ver==NULL)
-		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
-	else{
-		while(fread(&proj,sizeof(projeto),1,ver)==1)
-		{
-			printf("\n\n=================================================");
-			printf("\nCodigo do Projeto: %d",proj.codigo);
-			printf("\n%d/%d/%d Atividade:\n%s",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano,proj.atividade);
-			printf("\nDescricao: %s",proj.descricao);
-			printf("\nLocal\n Rua %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
-			for(i=0;i<TF;i++)
-			{
-				if(proj.cod_empresa[i]>0){
-					verEmpresa_cod(proj.cod_empresa[i]);
-				}
-			}
-			printf("\n=====================================================\n");
-		}
-	}
-	system("pause");
-}
-
 void verEmpresa_cod(int receber)
 {
 	FILE* arquivo;
@@ -941,6 +979,37 @@ void verEmpresa_cod(int receber)
 			}
 		fclose(arquivo);
 	}
+}
+
+void verProjeto()
+{
+	FILE* ver;
+	projeto proj;
+	char nomeEmpresa[20];
+	int i;
+	int busca;
+	ver = fopen("projetos.bin","rb");
+	if(ver==NULL)
+		printf("\nArquivo Indisponivel no momento, por favor tente mais tarde");
+	else{
+		while(fread(&proj,sizeof(projeto),1,ver)==1)
+		{
+			printf("\n\n=================================================");
+			printf("\nCodigo do Projeto: %d",proj.codigo);
+			printf("\n%d/%d/%d Atividade:\n%s",proj.d_p.dia,proj.d_p.mes,proj.d_p.ano,proj.atividade);
+			printf("\nDescricao: %s",proj.descricao);
+			printf("\nLocal\n Rua %s,%d Bairro %s\nCidade %s",proj.local.rua,proj.local.num,proj.local.bairro,proj.local.cidade);
+			for(i=0;i<TF;i++)
+			{
+				if(proj.cod_empresa[i]>0){
+					busca = proj.cod_empresa[i];
+					verEmpresa_cod(busca);
+				}
+			}
+			printf("\n=====================================================\n");
+		}
+	}
+	system("pause");
 }
 
 void editarVoluntario()
@@ -1154,11 +1223,10 @@ void cadastrarDoador()
 	else{
 		system("cls");
 		printf("\nBem Vindo");
-		printf("\nVoce tem certeza que deseja iniciar o cadastro de doadores?");
-		fflush(stdin);
-		scanf("%c",&confirmacao);
+		printf("\nVoce tem certeza que deseja iniciar o cadastro de doadores?\nUse (S/N)\n");
+		scanf(" %c",&confirmacao);
 		confirmacao=toupper(confirmacao);
-		if(confirmacao='S')
+		if(confirmacao=='S')
 		{
 			do{
 				printf("\n---Cadastro de Doadores---");
@@ -1183,10 +1251,10 @@ void cadastrarDoador()
 						printf("\nData de Doacao (dd/mm/aa):");
 						scanf("%d %d %d",&doa.p_d.data_nasc.dia,&doa.p_d.data_nasc.mes,&doa.p_d.data_nasc.ano);
 								
-						if(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano<ano_atual)
-							printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
+						if(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano>ano_atual)
+							printf("Data Invalida\nInsira uma data menor que do ano de 2023\nUse (DD/MM/AAAA)\n");
 						
-					}while(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano<ano_atual);
+					}while(doa.p_d.data_nasc.dia>31||doa.p_d.data_nasc.dia<1||doa.p_d.data_nasc.mes<1||doa.p_d.data_nasc.mes>12||doa.p_d.data_nasc.ano>ano_atual);
 				}while(menos_18==1);
 				do{
 					printf("\nSelecione o Tipo de Doacao:");
@@ -1223,8 +1291,8 @@ void cadastrarDoador()
 					system("cls");
 			}while(confirmacao=='S');	
 		}
-	fclose(cadastro);
-	system("pause");
+		fclose(cadastro);
+		system("pause");
 	}
 }
 
@@ -1234,9 +1302,10 @@ int proximo_codigoDoador(FILE* busca)
 	int codigo=0;
     rewind(busca);
 
-    while (fread(&doa, sizeof(doar_), 1, busca) == 1) {
-    	codigo =doa.cod+1;
-    }
+
+	    while (fread(&doa, sizeof(doar_), 1, busca) == 1) {
+	    	codigo = doa.cod+1;
+	    }
 
     return codigo;
 }
@@ -1412,6 +1481,153 @@ int busca_Ex_Ed_Doar(FILE* arquivo, char nome[])
 		return -1;
 }
 
+void OrganizarDoador()
+{
+	//Organiza doadores por COD
+	FILE *arquivo;
+	doar_ doa, doa_1;
+	int i, qtde=0;
+	arquivo=fopen("doadores.bin","rb+");
+	if(arquivo==NULL)
+		printf("\nErro na organizacao");
+	else
+	{
+		fseek(arquivo,0,2);//posiciona no fim do arquivo
+		qtde=ftell(arquivo)/sizeof(doar_);//qtde de registro
+		while(qtde>1)
+		{
+			for(i=0;i<qtde-1;i++)
+			{
+				fseek(arquivo,i*sizeof(doar_),0);
+				fread(&doa,sizeof(doar_),1,arquivo);
+				fseek(arquivo,(i+1)*sizeof(doar_),0);
+				fread(&doa_1,sizeof(doar_),1,arquivo);
+				if(doa.cod>doa_1.cod)
+				{
+					fseek(arquivo,i*sizeof(doar_),0);
+					fwrite(&doa_1,sizeof(doar_),1,arquivo);
+					fseek(arquivo,(i+1)*sizeof(doar_),0);
+					fwrite(&doa,sizeof(doar_),1,arquivo);
+				}
+			}
+			qtde--;
+
+		}
+		fclose(arquivo);
+		printf("\nDoadores Ordenados por Codigo\n");
+		system("pause");		
+	}
+	
+}
+
+void OrganizarVoluntario()
+{
+	FILE *arquivo;
+	voluntario vol, vol_1;
+	int i, qtde=0;
+	arquivo=fopen("voluntarios.bin","rb+");
+	if(arquivo==NULL)
+		printf("\nErro no arquivo");
+	else
+	{
+		fseek(arquivo,0,2);//posiciona no fim do arquivo
+		qtde=ftell(arquivo)/sizeof(voluntario);//qtde de registro
+		while(qtde>1)
+		{
+			for(i=0;i<qtde-1;i++)
+			{
+				fseek(arquivo,i*sizeof(voluntario),0);
+				fread(&vol,sizeof(voluntario),1,arquivo);
+				fseek(arquivo,(i+1)*sizeof(voluntario),0);
+				fread(&vol_1,sizeof(voluntario),1,arquivo);
+				if(strcmp(vol.p_v.nome,vol_1.p_v.nome)>0)
+				{
+					fseek(arquivo,i*sizeof(voluntario),0);
+					fwrite(&vol_1,sizeof(voluntario),1,arquivo);
+					fseek(arquivo,(i+1)*sizeof(voluntario),0);
+					fwrite(&vol,sizeof(voluntario),1,arquivo);
+				}
+			}
+			qtde--;
+		}
+		fclose(arquivo);
+		printf("\nVoluntarios Ordenados por Nome\n");
+		system("pause");
+	}
+}
+
+void OrganizarProjeto()
+{
+	FILE *arquivo;
+	projeto proj, proj_1;
+	int i, qtde=0;
+	arquivo=fopen("projetos.bin","rb+");
+	if(arquivo==NULL)
+		printf("\nErro no arquivo");
+	else
+	{
+		fseek(arquivo,0,2);//posiciona no fim do arquivo
+		qtde=ftell(arquivo)/sizeof(projeto);//qtde de registro
+		while(qtde>1)
+		{
+			for(i=0;i<qtde-1;i++)
+			{
+				fseek(arquivo,i*sizeof(projeto),0);
+				fread(&proj,sizeof(projeto),1,arquivo);
+				fseek(arquivo,(i+1)*sizeof(projeto),0);
+				fread(&proj_1,sizeof(projeto),1,arquivo);
+				if(proj.codigo>proj_1.codigo)
+				{
+					fseek(arquivo,i*sizeof(projeto),0);
+					fwrite(&proj_1,sizeof(projeto),1,arquivo);
+					fseek(arquivo,(i+1)*sizeof(projeto),0);
+					fwrite(&proj,sizeof(projeto),1,arquivo);
+				}
+			}
+			qtde--;
+		}
+		fclose(arquivo);
+		printf("\nProjetos Ordenados por Codigo\n");
+		system("pause");
+	}	
+}
+
+void OrganizarEmpresa()
+{
+	FILE *arquivo;
+	empresa emp, emp_1;
+	int i, qtde=0;
+	arquivo=fopen("empresas.bin","rb+");
+	if(arquivo==NULL)
+		printf("\nErro no arquivo");
+	else
+	{
+		fseek(arquivo,0,2);//posiciona no fim do arquivo
+		qtde=ftell(arquivo)/sizeof(empresa);//qtde de registro
+		while(qtde>1)
+		{
+			for(i=0;i<qtde-1;i++)
+			{
+				fseek(arquivo,i*sizeof(empresa),0);
+				fread(&emp,sizeof(empresa),1,arquivo);
+				fseek(arquivo,(i+1)*sizeof(empresa),0);
+				fread(&emp_1,sizeof(empresa),1,arquivo);
+				if(strcmp(emp.nome,emp_1.nome)>0)
+				{
+					fseek(arquivo,i*sizeof(empresa),0);
+					fwrite(&emp_1,sizeof(empresa),1,arquivo);
+					fseek(arquivo,(i+1)*sizeof(empresa),0);
+					fwrite(&emp,sizeof(empresa),1,arquivo);
+				}
+			}
+			qtde--;
+		}
+		fclose(arquivo);
+		printf("\nEmpresas Ordenadas por Nome\n");
+		system("pause");
+	}	
+}
+
 int opcao_sel()
 {
 	int retorno;
@@ -1426,18 +1642,19 @@ int opcao_sel()
 	    printf("3. Lancamento de Horas\n");//case 3
 	    printf("4. Relatorio\n");//case 4
 	    printf("5. Editar\n");//case 5
-	    printf("6. Finalizar\n\n");//case 6
+	    printf("6. Ordenar\n");//case 6
+	    printf("7. Finalizar\n\n");//case 7
 	    
     	printf("Digite o numero correspondente a opcao desejada: ");
     	scanf("%d", &retorno);
     	
-    	if(retorno<1||retorno>6)
+    	if(retorno<1||retorno>7)
     	{
     		system("cls");
     		printf("\nSelecione uma opcao Valida\n\n");	
     	}
     	
-	}while(retorno<1||retorno>6);
+	}while(retorno<1||retorno>7);
 	
 	return retorno;
 }
@@ -1548,6 +1765,33 @@ int op_editar()//case 5
     return retorno;
 }
 
+int op_ordenar()
+{
+	int retorno;
+	system("cls");
+	
+	do
+	{
+		printf("\nMenu de Ordenar:\n");
+	    printf("1. Voluntario \n");
+	    printf("2. Empresa\n");
+	    printf("3. Projeto\n");
+	    printf("4. Doador\n");
+	    printf("5. Retornar\n\n");
+	
+	    printf("Digite o numero correspondente a opcao desejada: ");
+	    scanf("%d", &retorno);
+	    
+	    if(retorno>5||retorno<=0)
+	    {
+	    	system("cls");
+	    	printf("\nOpcao Invalida.\n\n");
+	    }
+	}while(retorno>5||retorno<=0);
+    
+    return retorno;
+}
+
 main()
 {
 	voluntario vol;
@@ -1558,7 +1802,7 @@ main()
 	
 
     opcao = opcao_sel();
-    while(opcao != 6)
+    while(opcao != 7)
     {
 	    switch(opcao)
 	    {
@@ -1652,6 +1896,27 @@ main()
                         break;
                 }
                 break;
+            case 6:
+            	opcao=op_ordenar();
+            	switch(opcao)
+            	{
+            		case 1:
+            			OrganizarVoluntario();//Feito?
+            			break;
+            		case 2:
+            			OrganizarEmpresa();//Feito?
+            			break;
+            		case 3:
+            			OrganizarProjeto();//
+            			break;
+            		case 4:
+            			OrganizarDoador();//Feito?
+            			break;
+            		case 5:
+            			printf("Retornando:\n");
+                        break;
+            	}
+            	break;
 	    }
 	    opcao = opcao_sel();
 	}
