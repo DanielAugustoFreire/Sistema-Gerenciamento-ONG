@@ -1,5 +1,5 @@
 /*
-Cada volunt·rio pode estar em um ou mais projetos
+Cada volunt√°rio pode estar em um ou mais projetos
 para cada projeto pode-se ter uma ou mais empresas parceiras
 */
 
@@ -15,7 +15,7 @@ typedef struct{
 	int dia, mes, ano;
 }data;
 
-//Struct EndereÁo
+//Struct Endere√ßo
 typedef struct{
 	char rua[30], bairro[20], cidade[20];
 	int num;
@@ -26,7 +26,7 @@ typedef struct{
 	data data_nasc;
 }pessoa;
 
-//Struct DoaÁ„o
+//Struct Doa√ß√£o
 typedef struct{
 	char descricao[60],o_que[50];
 	int cod;
@@ -68,7 +68,7 @@ typedef struct{
 void  cadastrarVoluntario()
 {
 	SYSTEMTIME st;
-	// ObtÈm a data e a hora locais
+	// Obt√©m a data e a hora locais
     GetLocalTime(&st);
 	int ano_atual= st.wYear;//armazenar o ano atual em uma variavel
 	FILE* cadastro;
@@ -188,7 +188,7 @@ int buscaV(FILE* busca,int idVol)
         }
     }
 
-    return 1;  // ID n„o encontrado
+    return 1;  // ID n√£o encontrado
 }
 
 void cadastrarEmpresa()
@@ -281,7 +281,7 @@ buscaE(FILE* busca, int codigo)
 void cadastrarProjeto()
 {
 	SYSTEMTIME st;
-	// ObtÈm a data e a hora locais
+	// Obt√©m a data e a hora locais
     GetLocalTime(&st);
 	int ano_atual= st.wYear;//armazenar o ano atual em uma variavel
 	int retorno,TM,i;
@@ -324,58 +324,61 @@ void cadastrarProjeto()
 				do
 				{
 					printf("\nInsira o codigo da empresa para registra-la em no projeto\n");
-					scanf("%d",&proj.cod_empresa[i]);
-					
-					retorno = confirmaEmp(proj.cod_empresa[i]);
+					scanf("%d",&proj.cod_empresa[i]);		
+					retorno = confirmaEmp(proj.cod_empresa[i]);						
 					if(retorno==-1)
 						printf("\nNao foi possivel verificar se a empresa existe");
-					if(retorno!=0)
+					if(retorno==1)
 						printf("\nNao existe nenhuma empresa com o codigo %d\nPor favor digite outro e tente novamente\n***Caso o valor de empresa foi digitado errado, apenas coloque 0 no codigo da empresa***.\n",proj.cod_empresa[i]);
-				}while(retorno!=0||retorno==-1);
+				}while(retorno==1||retorno==-1);
 			}
 			for(i = TM; i<20;i++)
 				proj.cod_empresa[i]=0;
-			
-			printf("\nAtividade: ");
-			fflush(stdin);
-			gets(proj.atividade);
-			
-			printf("\nDescricao: ");
-			fflush(stdin);
-			gets(proj.descricao);
-			printf("\nData do Projeto:\nUse (DD/MM/AAAA) ");
-			
-			do{
-				scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
+			if(proj.cod_empresa[0]!=0)
+			{
 				
-				if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
-					printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
+				printf("\nAtividade: ");
+				fflush(stdin);
+				gets(proj.atividade);
 				
-			}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
-			printf("\nLocal a ser Realizado:");
-			printf("\nRua: ");
-			fflush(stdin);
-			gets(proj.local.rua);
-			
-			printf("\nNumero: ");
-			scanf("%d",&proj.local.num);
-			
-			printf("\nBairro: ");
-			fflush(stdin);
-			gets(proj.local.cidade);
-			
-			printf("\nCidade: ");
-			fflush(stdin);
-			gets(proj.local.cidade);
-			
-			fwrite(&proj,sizeof(projeto),1,cadastro);
-						
-			printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
-			scanf(" %c",&confirmacao);
-			confirmacao=toupper(confirmacao);
-			
-			if(confirmacao=='S')
-				system("cls");
+				printf("\nDescricao: ");
+				fflush(stdin);
+				gets(proj.descricao);
+				printf("\nData do Projeto:\nUse (DD/MM/AAAA) ");
+				
+				do{
+					scanf("%d %d %d",&proj.d_p.dia,&proj.d_p.mes,&proj.d_p.ano);
+					
+					if(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual)
+						printf("Data Invalida\nInsira uma data do ano de 2023 ou apos\nUse (DD/MM/AAAA)\n");
+					
+				}while(proj.d_p.dia>31||proj.d_p.dia<1||proj.d_p.mes<1||proj.d_p.mes>12||proj.d_p.ano<ano_atual);
+				printf("\nLocal a ser Realizado:");
+				printf("\nRua: ");
+				fflush(stdin);
+				gets(proj.local.rua);
+				
+				printf("\nNumero: ");
+				scanf("%d",&proj.local.num);
+				
+				printf("\nBairro: ");
+				fflush(stdin);
+				gets(proj.local.cidade);
+				
+				printf("\nCidade: ");
+				fflush(stdin);
+				gets(proj.local.cidade);
+				
+				fwrite(&proj,sizeof(projeto),1,cadastro);
+							
+				printf("\nDeseja Fazer mais Cadastro?\nUse S/N\n");
+				scanf(" %c",&confirmacao);
+				confirmacao=toupper(confirmacao);
+				
+				if(confirmacao=='S')
+					system("cls");
+					
+			}
 		}while(confirmacao=='S');
 		fclose(cadastro);
 	}
@@ -405,19 +408,22 @@ int confirmaEmp(int codigo)
 	{
 		if(codigo==0){
 			fclose(busca);
-			return 1;
+			return 2;
 		}
-		rewind(busca);
-		while(fread(&emp,sizeof(empresa),1,busca)==1)
-		{
-
-			if(codigo==emp.codigo){
-				fclose(busca);
-				return 0;
+		else{
+			
+			rewind(busca);
+			while(fread(&emp,sizeof(empresa),1,busca)==1)
+			{
+	
+				if(codigo==emp.codigo){
+					fclose(busca);
+					return 0;
+				}
 			}
-		}
-		fclose(busca);
-		return 1;
+			fclose(busca);
+			return 1;
+			}
 	}
 }
 void excluirVoluntario()
@@ -648,9 +654,9 @@ void excluirProjeto()
 						remove("projetos.bin");
 						rename("help_projeto.bin","projetos.bin");
 						printf("\nExcluido...\n");
+						//RetirarHoras(codigo); com essa fun√ß√£o ativada nao funciona a exclusao do projeto
 						system("pause");
 					}
-					//RetirarHoras(codigo);
 				}
 			}
 			if(deseja!='S')
@@ -658,60 +664,38 @@ void excluirProjeto()
 		}while(pos==-1||deseja!='S');
 	}	
 }
-/*N„o Consegui Retirar as horas do registro 
-void RetirarHoras(int codigo)
+//N√£o Consegui Retirar as horas do registro pois quando esta fun√ß√£o esta ativada o Dev simplesmente nao apagar e nem renomeia essa func, nao sei por que
+/*void RetirarHoras(int codigo)
 {
     FILE *arquivo;
     voluntario vol;
-    int pos, i;
+    int i;
 
     arquivo = fopen("voluntarios.bin", "rb+");
     if (arquivo == NULL)
     {
-        perror("Erro ao abrir voluntarios.bin para leitura/escrita");
-        return 0; // Ou outro cÛdigo de erro adequado
+        printf("Erro ao abrir voluntarios.bin para leitura/escrita");
     }
 
-    pos = buscaZera(arquivo, codigo);
-
-    rewind(arquivo);
-    while (fread(&vol, sizeof(voluntario), 1, arquivo) == 1)
-    {
-        for (i = 0; i < TF; i++)
-        {
-            if (codigo == vol.projeto.cod_projetos[i])
-            {
-                vol.projeto.cod_projetos[i] = 0;
-                vol.projeto.horas_cada[i] = 0;
-            }
-        }
-        
-        fseek(arquivo, pos, SEEK_SET);
-        fwrite(&vol, sizeof(voluntario), 1, arquivo);
-        pos = ftell(arquivo);
-    }
-
-    fclose(arquivo);
-    return 1; // Ou outro cÛdigo de sucesso adequado
-}
-int buscaZera(FILE* arquivo,int cod)
-{
-	int i;
-	voluntario vol;
-	rewind(arquivo);
-	fread(&vol,sizeof(voluntario),1,arquivo);
-	i=0;
-	
-	while(!feof(arquivo) && cod!=vol.projeto.cod_projetos[i]){
-		fread(&vol,sizeof(voluntario),1,arquivo);
-		i++;
-		if(i==TF)
-			i=0;
-	}
-	if(!feof(arquivo))
-		return(ftell(arquivo)-sizeof(projeto));
 	else
-		return -1;
+	{	
+	    rewind(arquivo);
+	    fread(&vol, sizeof(voluntario), 1, arquivo);
+	    while (!feof(arquivo))
+	    {
+	        for (i = 0; i < TF; i++)
+	        {
+	        	fread(&vol, sizeof(voluntario), 1, arquivo);
+	            if (codigo == vol.projeto.cod_projetos[i])
+	            {
+	                vol.projeto.cod_projetos[i] = 0;
+	                vol.projeto.horas_cada[i] = 0;
+	                fwrite(&vol, sizeof(voluntario), 1, arquivo);
+	            }
+	        }
+    	}
+	}
+    fclose(arquivo);
 }
 */
 int busca_Ex_Ed_Pro(FILE* arquivo, int cod)
